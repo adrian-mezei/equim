@@ -1,0 +1,54 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <title>Toura blur test</title>
+        
+        <link rel="stylesheet" href="https://cdn.pannellum.org/2.4/pannellum.css"/>
+
+        <script type="text/javascript" src="../js/pannellum.js"></script>
+        <script type="text/javascript" src="../js/jimp.min.js"></script>
+        <script type="text/javascript" src="../js/blur.js"></script>
+
+        <style>
+            #panorama {
+                width: 600px;
+                height: 400px;
+            }
+        </style>
+
+        <script>
+            const imagePath = 'https://s3-eu-west-1.amazonaws.com/brand.toura.io/images/jimp/equirectangularRED.jpg';
+
+            const hotSpotsBlessing = [
+                // longitude(yaw) -180 - +180; latitude(pitch): -90 - +90
+                { yaw: -14.4,   pitch: 70.2 },
+                { yaw: 22.05,   pitch: 70.38 },
+                { yaw: 22.68,   pitch: 63 },
+                { yaw: -12.78,  pitch: 63 }
+            ];
+
+            blur.read(imagePath, (err, image) => {
+                if(err) return console.log(err);
+
+                blur.blurEquirectRectangle(image, hotSpotsBlessing, 100);
+                
+                blur.getBase64(image, (err, imageBase64) => {
+                    if(err) return console.log(err);
+                    
+                    pannellum.viewer('panorama', {
+                        type: 'equirectangular',
+                        panorama: imageBase64,
+                        hotSpots: hotSpotsBlessing
+                    });
+                });
+            });
+        </script>
+    </head>
+
+    <body>
+        <div id="panorama"></div>
+    </body>
+</html>
