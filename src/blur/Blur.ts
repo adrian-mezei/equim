@@ -39,27 +39,41 @@ export class Blur {
      * @param hotspots The corners of the rectangle to be blured.
      * @param blurIntensity The radius of the blur color averaging.
      */
-    public blurEquirectRectangle(image: Jimp, hotspots: Hotspot[], blurIntensity: number) {
-        if(hotspots.length !== 4) throw new Error('Only quadrilaterals (4 hotspots) are accepted.');
-        
-        /*for(let i=0; i<hotspots.length; i++){
-            if(hotspots[(i+1)%hotspots.length].yaw - hotspots[i].yaw >= 180) return callback(new Error('All consecutive yaws must be less than 180 degrees from each other.'));
-        }*/
-        
-        // check that no two points are too close to each other
-        //if(!noTwoHotspotsAreTooClose(hotspots, 0.1)) return callback(new Error('There are hotspots that are too close to each other.'));
-        // check that the provided point distances cannot be larger than
-        //     the half length of the great circle, otherwise the other
-        //     half of the Great circle is drawn, so in this case, a further point must be added
-        //     (greatCircle with parameter 1.5?)
+    public blurEquirectRectangle(image: Jimp, hotspotsArray: Hotspot[][], blurIntensity: number) {
+        const masks: Mask[] = [];
+        for(const hotspots of hotspotsArray){
+            if(hotspots.length !== 4) throw new Error('Only quadrilaterals (4 hotspots) are accepted.');
+            
+            /*for(let i=0; i<hotspots.length; i++){
+                if(hotspots[(i+1)%hotspots.length].yaw - hotspots[i].yaw >= 180) return callback(new Error('All consecutive yaws must be less than 180 degrees from each other.'));
+            }*/
+            
+            // check that no two points are too close to each other
+            //if(!noTwoHotspotsAreTooClose(hotspots, 0.1)) return callback(new Error('There are hotspots that are too close to each other.'));
+            // check that the provided point distances cannot be larger than
+            //     the half length of the great circle, otherwise the other
+            //     half of the Great circle is drawn, so in this case, a further point must be added
+            //     (greatCircle with parameter 1.5?)
 
-        const points: Point[] = Converter.convertToXYs(hotspots);
-        
-        //let time = new Date();
-        var segmentedBoundary = GreatCircle.segmentAlongGreatCircles(points); // Segment the lines of consecutive hotspots along the Great Circles
-        //console.log('    Segmentation along Great Circle: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
-        const chunks = EdgeDetector.detectEdges(segmentedBoundary, 0.5); // The corners of the image are added if needed
-        //console.log('    Extension with edges: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
+            const points: Point[] = new Converter(image.getWidth(), image.getHeight()).convertToXYs(hotspots);
+            const gc = new GreatCircle(image.getWidth(), image.getHeight());
+
+            //let time = new Date();
+            var segmentedBoundary = gc.segmentAlongGreatCircles(points); // Segment the lines of consecutive hotspots along the Great Circles
+            //console.log('    Segmentation along Great Circle: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
+            const chunks = EdgeDetector.detectEdges(segmentedBoundary, 0.5); // The corners of the image are added if needed
+            //console.log('    Extension with edges: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
+
+            masks.push(...this.chunksToMasks(image, chunks));
+        }
+
+        // TODO do the blurs in one step
+        for(let i=0; i<masks.length; i++) this.blurAtMask(image, masks[i], blurIntensity);
+        //console.log('    Jimp blur: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
+    }
+
+    private chunksToMasks(image: Jimp, chunks: Point[][]): Mask[] {
+        const gc = new GreatCircle(image.getWidth(), image.getHeight());
 
         const masks: Mask[] = [];
         for(let chunk of chunks) {
@@ -68,14 +82,12 @@ export class Blur {
             
             // Calculate a point inside the boundary
             const pointAtHalfPerimeter = closedBoundary[Math.round(closedBoundary.length/2)];
-            const insidePoint = GreatCircle.pointBetweenTwoPoints(closedBoundary[0], pointAtHalfPerimeter, 0.5);
+            const insidePoint = gc.pointBetweenTwoPoints(closedBoundary[0], pointAtHalfPerimeter, 0.5);
             
-            masks.push(FloodFill.fillArea(closedBoundary, insidePoint)); // Flood fill from the inside point
+            masks.push(FloodFill.fillArea(closedBoundary, insidePoint, image.getWidth(), image.getHeight())); // Flood fill from the inside point
             //console.log('    Flood fill: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
         }
-        
-        for(let i=0; i<masks.length; i++) this.blurAtMask(image, masks[i], blurIntensity);
-        //console.log('    Jimp blur: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
+        return masks;
     }
 
     /**

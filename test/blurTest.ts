@@ -1,12 +1,13 @@
 import { expect } from 'chai';
 import { Blur } from './../src/blur/Blur';
+import Jimp = require('jimp');
 
 const blur = new Blur();
 
 const imagePath = './res/equirectangularRED.jpg';
 
 describe('Blur', function() {
-    let image: Jimp.Jimp;
+    let image: Jimp;
     beforeEach(function(done) {
         this.timeout(3000);
         
@@ -17,8 +18,8 @@ describe('Blur', function() {
     });
 
     describe('of hotspotsBlessing', function() {
-        it('should be executed without error under 300ms', function() {
-            this.timeout(350);
+        it('should be executed without error under 500ms', function() {
+            this.timeout(500);
             
             const hotSpotsBlessing = [
                 // longitude(yaw) -180 - +180; latitude(pitch): -90 - +90
@@ -28,7 +29,7 @@ describe('Blur', function() {
                 { yaw: -12.78,  pitch: 63 }
             ];
 
-            blur.blurEquirectRectangle(image, hotSpotsBlessing, 100);
+            blur.blurEquirectRectangle(image, [hotSpotsBlessing], 100);
         });
     });
 
@@ -44,12 +45,12 @@ describe('Blur', function() {
                 { yaw: 10.8,  pitch: -76 }
             ];
 
-            blur.blurEquirectRectangle(image, hotSpotsTile, 100);
+            blur.blurEquirectRectangle(image, [hotSpotsTile], 100);
         });
     });
     
     describe('of hotspotsSmall', function() {
-        it('should be executed without error under 150ms', function() {
+        it('should be executed without error under 250ms', function() {
             this.timeout(150);
 
             const hotSpotsSmall = [
@@ -60,13 +61,13 @@ describe('Blur', function() {
                 { yaw: 8,  pitch: -68 }
             ];
 
-            blur.blurEquirectRectangle(image, hotSpotsSmall, 100);
+            blur.blurEquirectRectangle(image, [hotSpotsSmall], 100);
         });
     });
 
     describe('of hotspotsLarge', function() {
-        it('should be executed without error under 10000ms', function() {
-            this.timeout(10000);
+        it('should be executed without error under 14000ms', function() {
+            this.timeout(14000);
 
             const hotSpotsLarge = [
                 // longitude(yaw) -180 - +180; latitude(pitch): -90 - +90
@@ -76,13 +77,13 @@ describe('Blur', function() {
                 { yaw: -80,  pitch: -40 }
             ];
 
-            blur.blurEquirectRectangle(image, hotSpotsLarge, 100);
+            blur.blurEquirectRectangle(image, [hotSpotsLarge], 100);
         });
     });
 
     describe('of hotspotsBottom', function() {
-        it('should be executed without error under 3000ms', function() {
-            this.timeout(3000);
+        it('should be executed without error under 5000ms', function() {
+            this.timeout(5000);
 
             const hotSpotsBottom = [
                 // longitude(yaw) -180 - +180; latitude(pitch): -90 - +90
@@ -92,7 +93,7 @@ describe('Blur', function() {
                 { yaw: -135,   pitch: -74.5 }
             ];
 
-            blur.blurEquirectRectangle(image, hotSpotsBottom, 100);
+            blur.blurEquirectRectangle(image, [hotSpotsBottom], 100);
         });
     });
 
@@ -108,7 +109,7 @@ describe('Blur', function() {
                 { yaw: 150,  pitch: -20 }
             ];
 
-            blur.blurEquirectRectangle(image, hotSpotsEdge, 100);
+            blur.blurEquirectRectangle(image, [hotSpotsEdge], 100);
         });
     });
 
@@ -124,7 +125,7 @@ describe('Blur', function() {
                 { yaw: -80,  pitch: -20 }
             ];
 
-            let fn = () => blur.blurEquirectRectangle(image, hotSpotsTie, 100);
+            let fn = () => blur.blurEquirectRectangle(image, [hotSpotsTie], 100);
             expect(fn).to.throw();
         });
     });
@@ -141,7 +142,7 @@ describe('Blur', function() {
                 { yaw: -20,  pitch: -20 }
             ];
 
-            let fn = () => blur.blurEquirectRectangle(image, hotSpotsConcave, 100);
+            let fn = () => blur.blurEquirectRectangle(image, [hotSpotsConcave], 100);
             expect(fn).to.throw();
         });
     });

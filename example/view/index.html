@@ -7,6 +7,7 @@
         <title>Toura blur test</title>
         
         <link rel="stylesheet" href="https://cdn.pannellum.org/2.4/pannellum.css"/>
+        <link rel="stylesheet" href="../css/style.css"/>
 
         <script type="text/javascript" src="../js/pannellum.js"></script>
         <script type="text/javascript" src="../js/jimp.min.js"></script>
@@ -14,34 +15,54 @@
 
         <style>
             #panorama {
-                width: 600px;
-                height: 400px;
+                width: 700px;
+                height: 501px;
             }
         </style>
 
         <script>
-            const imagePath = 'https://s3-eu-west-1.amazonaws.com/brand.toura.io/images/jimp/equirectangularRED.jpg';
-
-            const hotSpotsBlessing = [
-                // longitude(yaw) -180 - +180; latitude(pitch): -90 - +90
-                { yaw: -14.4,   pitch: 70.2 },
-                { yaw: 22.05,   pitch: 70.38 },
-                { yaw: 22.68,   pitch: 63 },
-                { yaw: -12.78,  pitch: 63 }
+            const imagePath = 'https://s3-eu-west-1.amazonaws.com/equim.toura.io/panoramas/room.jpg';
+            const blurAreas = [
+                [ // hotSpotsBlessing
+                    { yaw: -14.4,   pitch: 70.2 },
+                    { yaw: 22.05,   pitch: 70.38 },
+                    { yaw: 22.68,   pitch: 63 },
+                    { yaw: -12.78,  pitch: 63 }
+                ],
+                [ // hotSpotsTile
+                    { yaw: 6.5,   pitch: -64 },
+                    { yaw: 31.4,   pitch: -60.7},
+                    { yaw: 49.7,   pitch: -69.9 },
+                    { yaw: 10.8,  pitch: -76 }
+                ], 
+                [ // hotSpotsBottom
+                    { yaw: -36,  pitch: -72.5 },
+                    { yaw: 50,   pitch: -69.7 },
+                    { yaw: 129.5,   pitch: -71.5},
+                    { yaw: -135,   pitch: -74.5 }
+                ],
+                [ // hotSpotsEdge
+                    { yaw: 150,   pitch: 20 },
+                    { yaw: -150,   pitch: 20},
+                    { yaw: -150,   pitch: -20 },
+                    { yaw: 150,  pitch: -20 }
+                ]
             ];
 
             blur.read(imagePath, (err, image) => {
                 if(err) return console.log(err);
+                document.getElementById('originalImage').src = imagePath;
 
-                blur.blurEquirectRectangle(image, hotSpotsBlessing, 100);
+                blur.blurEquirectRectangle(image, blurAreas, 100);
                 
                 blur.getBase64(image, (err, imageBase64) => {
                     if(err) return console.log(err);
+                    document.getElementById('bluredImage').src = imageBase64;
                     
                     pannellum.viewer('panorama', {
                         type: 'equirectangular',
                         panorama: imageBase64,
-                        hotSpots: hotSpotsBlessing
+                        hotSpots: [].concat.apply([], blurAreas)
                     });
                 });
             });
@@ -49,6 +70,14 @@
     </head>
 
     <body>
-        <div id="panorama"></div>
+        <div id="wrapper">
+                <div id="left">
+                    <div id="panorama"></div>
+                </div>
+                <div id="right">
+                    <img id="originalImage" title="Original image" width="497px" src="" alt="Original image loading..."></img>
+                    <img id="bluredImage" title="Blured image" width="497px" src="" alt="Blured image loading..."></img>
+                </div>
+        </div>
     </body>
 </html>

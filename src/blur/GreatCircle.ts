@@ -2,7 +2,18 @@ import { Converter } from './Converter';
 import { Hotspot } from '../model/Hotspot';
 import { Point } from '../model/Point';
 
+// useful source: http://www.movable-type.co.uk/scripts/latlong.html
 export class GreatCircle {
+
+    private imageWidth: number;
+    private imageHeight: number;
+    private converter: Converter;
+
+    constructor(imageWidth: number, imageHeight: number){
+        this.imageWidth = imageWidth;
+        this.imageHeight = imageHeight;
+        this.converter = new Converter(this.imageWidth, this.imageHeight);
+    }
 
     /**
      * Segments each line segment of the consecutive point pairs of the provided points
@@ -12,7 +23,7 @@ export class GreatCircle {
      * 
      * @returns The array of generated points including the provided points.
      */
-    public static segmentAlongGreatCircles(points: Point[]): Point[] {
+    public segmentAlongGreatCircles(points: Point[]): Point[] {
         var segmentedBoundary: Point[] = [];
         for(var i=0; i<points.length; i++){
             const point1 = points[i];
@@ -36,7 +47,7 @@ export class GreatCircle {
      * 
      * @returns The array of generated points including the provided point1 and excluding the provided point2.
      */
-    public static segmentAlongGreatCircle(point1: Point, point2: Point, numberOfGeneratedPoints: number): Point[] {
+    public segmentAlongGreatCircle(point1: Point, point2: Point, numberOfGeneratedPoints: number): Point[] {
         const boundingPoints: Point[] = [];
         for(var i=0; i<=1; i+=1/numberOfGeneratedPoints){
             boundingPoints.push(this.pointBetweenTwoPoints(point1, point2, i));
@@ -53,9 +64,9 @@ export class GreatCircle {
      * @param t The parameter where the Great Circle is evaluated. This parameter 
      * is 0 at point1 and 1 at point2.
      */
-    public static pointBetweenTwoPoints(point1: Point, point2: Point, t: number): Point {
-        const hotspot1 = Converter.convertToYawPitch(point1);
-        const hotspot2 = Converter.convertToYawPitch(point2);
+    public pointBetweenTwoPoints(point1: Point, point2: Point, t: number): Point {
+        const hotspot1 = this.converter.convertToYawPitch(point1);
+        const hotspot2 = this.converter.convertToYawPitch(point2);
 
         const h1: Hotspot = {
             yaw: hotspot1.yaw/180.0*Math.PI,
@@ -85,7 +96,7 @@ export class GreatCircle {
             pitch: Math.atan2(z,Math.sqrt(x*x+y*y))/Math.PI*180
         }
 
-        const p = Converter.convertToXY(hotspot);
+        const p = this.converter.convertToXY(hotspot);
         return {x: Math.round(p.x), y: Math.round(p.y)};
     }
 

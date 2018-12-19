@@ -2,8 +2,10 @@ import { Blur } from './blur/Blur';
 import { Drawer } from './blur/Drawer';
 
 const blur = new Blur();
-//const imagePath = './res/equirectangularRED.jpg';
-const imagePath = 'https://s3-eu-west-1.amazonaws.com/brand.toura.io/images/jimp/equirectangularRED.jpg';
+
+//const imagePath = 'https://s3-eu-west-1.amazonaws.com/equim.toura.io/panoramas/dom.jpg';
+const imagePath = 'https://s3-eu-west-1.amazonaws.com/equim.toura.io/panoramas/room.jpg';
+
 
 let beginTime = new Date();
 let time = new Date();
@@ -78,9 +80,9 @@ blur.read(imagePath, (err, image) => {
     console.log('Read time: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
     console.log();
  
-    blur.blurEquirectRectangle(image, hotSpotsBlessing, 100);
+    blur.blurEquirectRectangle(image, [hotSpotsBlessing, hotSpotsTile, hotSpotsBottom, hotSpotsEdge], 100);
         
-    Drawer.drawCircledHotspots(image, hotSpotsBlessing);
+    Drawer.drawCircledHotspots(image, [...hotSpotsBlessing, ...hotSpotsTile, ...hotSpotsBottom, ...hotSpotsEdge]);
 
     console.log('Total blur time: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
     console.log();

@@ -1,7 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const Converter_1 = require("./Converter");
+// useful source: http://www.movable-type.co.uk/scripts/latlong.html
 class GreatCircle {
+    constructor(imageWidth, imageHeight) {
+        this.imageWidth = imageWidth;
+        this.imageHeight = imageHeight;
+        this.converter = new Converter_1.Converter(this.imageWidth, this.imageHeight);
+    }
     /**
      * Segments each line segment of the consecutive point pairs of the provided points
      * along the Great Circle.
@@ -10,7 +16,7 @@ class GreatCircle {
      *
      * @returns The array of generated points including the provided points.
      */
-    static segmentAlongGreatCircles(points) {
+    segmentAlongGreatCircles(points) {
         var segmentedBoundary = [];
         for (var i = 0; i < points.length; i++) {
             const point1 = points[i];
@@ -31,7 +37,7 @@ class GreatCircle {
      *
      * @returns The array of generated points including the provided point1 and excluding the provided point2.
      */
-    static segmentAlongGreatCircle(point1, point2, numberOfGeneratedPoints) {
+    segmentAlongGreatCircle(point1, point2, numberOfGeneratedPoints) {
         const boundingPoints = [];
         for (var i = 0; i <= 1; i += 1 / numberOfGeneratedPoints) {
             boundingPoints.push(this.pointBetweenTwoPoints(point1, point2, i));
@@ -46,9 +52,9 @@ class GreatCircle {
      * @param t The parameter where the Great Circle is evaluated. This parameter
      * is 0 at point1 and 1 at point2.
      */
-    static pointBetweenTwoPoints(point1, point2, t) {
-        const hotspot1 = Converter_1.Converter.convertToYawPitch(point1);
-        const hotspot2 = Converter_1.Converter.convertToYawPitch(point2);
+    pointBetweenTwoPoints(point1, point2, t) {
+        const hotspot1 = this.converter.convertToYawPitch(point1);
+        const hotspot2 = this.converter.convertToYawPitch(point2);
         const h1 = {
             yaw: hotspot1.yaw / 180.0 * Math.PI,
             pitch: hotspot1.pitch / 180.0 * Math.PI
@@ -68,7 +74,7 @@ class GreatCircle {
             yaw: Math.atan2(y, x) / Math.PI * 180,
             pitch: Math.atan2(z, Math.sqrt(x * x + y * y)) / Math.PI * 180
         };
-        const p = Converter_1.Converter.convertToXY(hotspot);
+        const p = this.converter.convertToXY(hotspot);
         return { x: Math.round(p.x), y: Math.round(p.y) };
     }
 }

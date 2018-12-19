@@ -18,7 +18,7 @@ export class Blur {
         });
     }
 
-    public blurRectangular(imagePath: string, xCenter: number, yCenter: number, width: number, height: number, rotDeg: number, blurIntensity: number, callback: (err?: Error, image?: Jimp.Jimp) => void) {
+    public blurRectangular(imagePath: string, xCenter: number, yCenter: number, width: number, height: number, rotDeg: number, blurIntensity: number, callback: (err?: Error, image?: Jimp) => void) {
         this.blurMasked(imagePath, xCenter, yCenter, width, height, rotDeg, blurIntensity, this.squareMaskPath, callback);
         /*const a = rotDeg / 180 * Math.PI;
         const x = xCenter;
@@ -46,25 +46,25 @@ export class Blur {
         });*/
     }
 
-    public blurCircle(imagePath: string, xCenter: number, yCenter: number, radius: number, blurIntensity: number, callback: (err?: Error, image?: Jimp.Jimp) => void) {
+    public blurCircle(imagePath: string, xCenter: number, yCenter: number, radius: number, blurIntensity: number, callback: (err?: Error, image?: Jimp) => void) {
         this.blurEllipse(imagePath, xCenter, yCenter, radius, radius, 0, blurIntensity, callback);
     }
 
-    public getBase64(image: Jimp.Jimp, callback: (err: Error | null, imageBase64: string) => void): void {
+    public getBase64(image: Jimp, callback: (err: Error | null, imageBase64: string) => void): void {
         image.getBase64(image.getMIME(), callback);
     }
 
-    public writeToFile(image: Jimp.Jimp, path: string, callback: (err: Error | null) => void): void {
+    public writeToFile(image: Jimp, path: string, callback: (err: Error | null) => void): void {
         image.write(path, (err) => {
             callback(err);
         });
     }
 
-    public blurEllipse(imagePath: string, xCenter: number, yCenter: number, width: number, height: number, rotDeg: number, blurIntensity: number, callback: (err?: Error, image?: Jimp.Jimp) => void) {
+    public blurEllipse(imagePath: string, xCenter: number, yCenter: number, width: number, height: number, rotDeg: number, blurIntensity: number, callback: (err?: Error, image?: Jimp) => void) {
         this.blurMasked(imagePath, xCenter, yCenter, width, height, rotDeg, blurIntensity, this.circleMaskPath, callback);
     }
 
-    public blurMasked(imagePath: string, xCenter: number, yCenter: number, width: number, height: number, rotDeg: number, blurIntensity: number, maskPath: string, callback: (err?: Error, image?: Jimp.Jimp) => void) {
+    public blurMasked(imagePath: string, xCenter: number, yCenter: number, width: number, height: number, rotDeg: number, blurIntensity: number, maskPath: string, callback: (err?: Error, image?: Jimp) => void) {
         console.log('blurMasked');
         Jimp.read(imagePath).then(image => {
             console.log('read');
@@ -172,7 +172,7 @@ export class Blur {
         });
     }
 
-    private createRoundMask(width: number, height: number, xCenter: number, yCenter: number, radius: number, callback: (err?: Error, data?: {x: number, y: number, mask: Jimp.Jimp}) => void): void {
+    private createRoundMask(width: number, height: number, xCenter: number, yCenter: number, radius: number, callback: (err?: Error, data?: {x: number, y: number, mask: Jimp}) => void): void {
         const maskLines = [];
         let maxMaskWidth = 0;
         let addHeight = 0;
@@ -228,7 +228,7 @@ export class Blur {
         
     }
 
-    public drawX(imagePath: string, x: number, y: number, callback: (err?: Error, image?: Jimp.Jimp) => void) {
+    public drawX(imagePath: string, x: number, y: number, callback: (err?: Error, image?: Jimp) => void) {
         Jimp.read(imagePath).then(image => {
             
             this.drawOneX(x, y, image);
@@ -245,7 +245,7 @@ export class Blur {
         });
     };
 
-    public drawHotSpots(imagePath: string, hotSpots: {yaw: number, pitch: number}[], callback: (err?: Error, image?: Jimp.Jimp) => void) {
+    public drawHotSpots(imagePath: string, hotSpots: {yaw: number, pitch: number}[], callback: (err?: Error, image?: Jimp) => void) {
         Jimp.read(imagePath).then(image => {
             const hotSpotsXY: {x: number, y: number}[] = [];
             for(const hotSpot of hotSpots){
@@ -302,7 +302,7 @@ export class Blur {
         }
     }
 
-    public drawEquirectX(imagePath: string, yaw: number, pitch: number, callback: (err?: Error, image?: Jimp.Jimp) => void) {
+    public drawEquirectX(imagePath: string, yaw: number, pitch: number, callback: (err?: Error, image?: Jimp) => void) {
         Jimp.read(imagePath).then(image => {
 
             const coord = this.convertToXY(yaw, pitch);
@@ -320,7 +320,7 @@ export class Blur {
         });
     };
 
-    public drawEquirectRectImage(image: Jimp, yaw1: number, yaw2: number, pitch1: number, pitch2: number, callback: (err?: Error, image?: Jimp.Jimp) => void) {
+    public drawEquirectRectImage(image: Jimp, yaw1: number, yaw2: number, pitch1: number, pitch2: number, callback: (err?: Error, image?: Jimp) => void) {
         const coord = this.convertToXY((yaw1+yaw2)/2, (pitch1+pitch2)/2);
         this.drawOneX(coord.x, coord.y, image);
         for(var i=yaw1;i<yaw2; i+=Math.abs(yaw1-yaw2)/100){
@@ -343,7 +343,7 @@ export class Blur {
         callback(undefined, image);
     };
 
-    public drawEquirectRect(imagePath: string, yaw1: number, yaw2: number, pitch1: number, pitch2: number, callback: (err?: Error, image?: Jimp.Jimp) => void) {
+    public drawEquirectRect(imagePath: string, yaw1: number, yaw2: number, pitch1: number, pitch2: number, callback: (err?: Error, image?: Jimp) => void) {
         Jimp.read(imagePath).then(image => {
             this.drawEquirectRectImage(image, yaw1, yaw2, pitch1, pitch2, callback);
         });

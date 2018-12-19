@@ -58,42 +58,43 @@ export class Drawer {
     }
 
     public static drawEquirectX(image: Jimp, hotspot: Hotspot) {
-        const coord = Converter.convertToXY(hotspot);
+        const converter = new Converter(image.getWidth(), image.getHeight());
+        const coord = converter.convertToXY(hotspot);
 
         Drawer.drawX(image, coord);
 
         const radius = 100;
         const deg = radius/5;
         for(var i=0;i<2*Math.PI; i+=Math.PI/500){
-            const co = Converter.convertToXY({yaw: hotspot.yaw+Math.cos(i)*deg, pitch: hotspot.pitch+Math.sin(i)*deg});
+            const co = converter.convertToXY({yaw: hotspot.yaw+Math.cos(i)*deg, pitch: hotspot.pitch+Math.sin(i)*deg});
             Drawer.drawX(image, co);
         }
     };
 
-    public static drawHotspots(image: Jimp.Jimp, hotspots: Hotspot[]) {
-        const points: Point[] = Converter.convertToXYs(hotspots);
+    public static drawHotspots(image: Jimp, hotspots: Hotspot[]) {
+        const points: Point[] = new Converter(image.getWidth(), image.getHeight()).convertToXYs(hotspots);
         
         Drawer.drawXs(image, points, 20, {r: 255, g: 0, b: 0, a: 255});
     }
 
-    public static drawCircledHotspots(image: Jimp.Jimp, hotspots: Hotspot[]) {
-        const points: Point[] = Converter.convertToXYs(hotspots);
+    public static drawCircledHotspots(image: Jimp, hotspots: Hotspot[]) {
+        const points: Point[] = new Converter(image.getWidth(), image.getHeight()).convertToXYs(hotspots);
         
         Drawer.drawCircledXs(image, points);
     }
 
-    public static drawEquirectRectangle(image: Jimp.Jimp, hotspots: Hotspot[]) {
-        const points: Point[] = Converter.convertToXYs(hotspots);
+    public static drawEquirectRectangle(image: Jimp, hotspots: Hotspot[]) {
+        const points: Point[] = new Converter(image.getWidth(), image.getHeight()).convertToXYs(hotspots);
         
-        var segmentedBoundary = GreatCircle.segmentAlongGreatCircles(points); // Segment the lines of consecutive hotspots along the Great Circles
+        var segmentedBoundary = new GreatCircle(image.getWidth(), image.getHeight()).segmentAlongGreatCircles(points); // Segment the lines of consecutive hotspots along the Great Circles
         Drawer.drawXs(image, segmentedBoundary, 1, {r: 0, g: 255, b: 0, a: 255});
     }
 
-    public static drawEquirectRectangleClosed(image: Jimp.Jimp, hotspots: Hotspot[]) {
-        const points: Point[] = Converter.convertToXYs(hotspots);
+    public static drawEquirectRectangleClosed(image: Jimp, hotspots: Hotspot[]) {
+        const points: Point[] = new Converter(image.getWidth(), image.getHeight()).convertToXYs(hotspots);
         
-        var segmentedBoundary = GreatCircle.segmentAlongGreatCircles(points); // Segment the lines of consecutive hotspots along the Great Circles
-        EdgeDetector.extendWithCorners(segmentedBoundary, 0.5);
+        var segmentedBoundary = new GreatCircle(image.getWidth(), image.getHeight()).segmentAlongGreatCircles(points); // Segment the lines of consecutive hotspots along the Great Circles
+        EdgeDetector.detectEdges(segmentedBoundary, 0.5);
         var closedBoundary = ClosedLineConnector.connectWithClosedLines(segmentedBoundary); // Connect the segmented boundary to a closed curve
         
         Drawer.drawXs(image, closedBoundary, 1, {r: 0, g: 0, b: 255, a: 255});

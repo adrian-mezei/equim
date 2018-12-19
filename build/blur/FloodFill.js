@@ -1,17 +1,17 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 class FloodFill {
-    static fillArea(boundary, insidePoint) {
+    static fillArea(boundary, insidePoint, imageWidth, imageHeight) {
         if (!Number.isInteger(insidePoint.x) || !Number.isInteger(insidePoint.y))
             throw new Error('Provided insidePoint must be of integer coordinates.');
-        const area = this.createBooleanTableStructure(boundary);
-        this.queuedSurroundingFill(area.data, { x: insidePoint.x - area.xPosition, y: insidePoint.y - area.yPosition });
+        const area = this.createBooleanTableStructure(boundary, imageWidth, imageHeight);
+        this.queuedSurroundingFill(area.data, { x: insidePoint.x - area.xPosition, y: insidePoint.y - area.yPosition }, imageWidth, imageHeight);
         return this.createMaskStructure(area);
     }
-    static createBooleanTableStructure(points) {
-        var minX = this.imageWidth;
+    static createBooleanTableStructure(points, imageWidth, imageHeight) {
+        var minX = imageWidth;
         var maxX = 0;
-        var minY = this.imageHeight;
+        var minY = imageHeight;
         var maxY = 0;
         for (const p of points) {
             if (p.x > maxX)
@@ -66,7 +66,7 @@ class FloodFill {
         }
         return mask;
     }
-    static queuedSurroundingFill(area, insidePoint) {
+    static queuedSurroundingFill(area, insidePoint, imageWidth, imageHeight) {
         const queue = [insidePoint];
         while (queue.length > 0) {
             const point = queue.pop();
@@ -76,7 +76,7 @@ class FloodFill {
                 continue;
             if (!area[point.y][point.x]) {
                 area[point.y][point.x] = true;
-                const surrounding = this.getSurrounding(point, this.imageWidth, this.imageHeight);
+                const surrounding = this.getSurrounding(point, imageWidth, imageHeight);
                 for (const p of surrounding) {
                     if (p.y >= area.length || p.y < 0)
                         continue;
@@ -125,6 +125,4 @@ class FloodFill {
         return surrounding;
     }
 }
-FloodFill.imageWidth = 4000;
-FloodFill.imageHeight = 2000;
 exports.FloodFill = FloodFill;

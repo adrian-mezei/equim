@@ -50,33 +50,34 @@ class Drawer {
         }
     }
     static drawEquirectX(image, hotspot) {
-        const coord = Converter_1.Converter.convertToXY(hotspot);
+        const converter = new Converter_1.Converter(image.getWidth(), image.getHeight());
+        const coord = converter.convertToXY(hotspot);
         Drawer.drawX(image, coord);
         const radius = 100;
         const deg = radius / 5;
         for (var i = 0; i < 2 * Math.PI; i += Math.PI / 500) {
-            const co = Converter_1.Converter.convertToXY({ yaw: hotspot.yaw + Math.cos(i) * deg, pitch: hotspot.pitch + Math.sin(i) * deg });
+            const co = converter.convertToXY({ yaw: hotspot.yaw + Math.cos(i) * deg, pitch: hotspot.pitch + Math.sin(i) * deg });
             Drawer.drawX(image, co);
         }
     }
     ;
     static drawHotspots(image, hotspots) {
-        const points = Converter_1.Converter.convertToXYs(hotspots);
+        const points = new Converter_1.Converter(image.getWidth(), image.getHeight()).convertToXYs(hotspots);
         Drawer.drawXs(image, points, 20, { r: 255, g: 0, b: 0, a: 255 });
     }
     static drawCircledHotspots(image, hotspots) {
-        const points = Converter_1.Converter.convertToXYs(hotspots);
+        const points = new Converter_1.Converter(image.getWidth(), image.getHeight()).convertToXYs(hotspots);
         Drawer.drawCircledXs(image, points);
     }
     static drawEquirectRectangle(image, hotspots) {
-        const points = Converter_1.Converter.convertToXYs(hotspots);
-        var segmentedBoundary = GreatCircle_1.GreatCircle.segmentAlongGreatCircles(points); // Segment the lines of consecutive hotspots along the Great Circles
+        const points = new Converter_1.Converter(image.getWidth(), image.getHeight()).convertToXYs(hotspots);
+        var segmentedBoundary = new GreatCircle_1.GreatCircle(image.getWidth(), image.getHeight()).segmentAlongGreatCircles(points); // Segment the lines of consecutive hotspots along the Great Circles
         Drawer.drawXs(image, segmentedBoundary, 1, { r: 0, g: 255, b: 0, a: 255 });
     }
     static drawEquirectRectangleClosed(image, hotspots) {
-        const points = Converter_1.Converter.convertToXYs(hotspots);
-        var segmentedBoundary = GreatCircle_1.GreatCircle.segmentAlongGreatCircles(points); // Segment the lines of consecutive hotspots along the Great Circles
-        EdgeDetector_1.EdgeDetector.extendWithCorners(segmentedBoundary, 0.5);
+        const points = new Converter_1.Converter(image.getWidth(), image.getHeight()).convertToXYs(hotspots);
+        var segmentedBoundary = new GreatCircle_1.GreatCircle(image.getWidth(), image.getHeight()).segmentAlongGreatCircles(points); // Segment the lines of consecutive hotspots along the Great Circles
+        EdgeDetector_1.EdgeDetector.detectEdges(segmentedBoundary, 0.5);
         var closedBoundary = ClosedLineConnector_1.ClosedLineConnector.connectWithClosedLines(segmentedBoundary); // Connect the segmented boundary to a closed curve
         Drawer.drawXs(image, closedBoundary, 1, { r: 0, g: 0, b: 255, a: 255 });
     }

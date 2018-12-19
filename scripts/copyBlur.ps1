@@ -1,5 +1,5 @@
 $sourcePath = '.\build\blur\Blur.js';
-$targetPath = '.\public\js';
+$targetPath = '.\example\js';
 $targetFileName = 'blur.js'
 
 browserify --external jimp $sourcePath -o $($targetPath + '\' + $targetFileName)

@@ -3,8 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const Blur_1 = require("./blur/Blur");
 const Drawer_1 = require("./blur/Drawer");
 const blur = new Blur_1.Blur();
-//const imagePath = './res/equirectangularRED.jpg';
-const imagePath = 'https://s3-eu-west-1.amazonaws.com/brand.toura.io/images/jimp/equirectangularRED.jpg';
+//const imagePath = 'https://s3-eu-west-1.amazonaws.com/equim.toura.io/panoramas/dom.jpg';
+const imagePath = 'https://s3-eu-west-1.amazonaws.com/equim.toura.io/panoramas/room.jpg';
 let beginTime = new Date();
 let time = new Date();
 const hotSpotsBlessing = [
@@ -69,8 +69,8 @@ blur.read(imagePath, (err, image) => {
     console.log('Read time: ' + (new Date().getTime() - time.getTime()) / 1000 + 's');
     time = new Date();
     console.log();
-    blur.blurEquirectRectangle(image, hotSpotsBlessing, 100);
-    Drawer_1.Drawer.drawCircledHotspots(image, hotSpotsBlessing);
+    blur.blurEquirectRectangle(image, [hotSpotsBlessing, hotSpotsTile, hotSpotsBottom, hotSpotsEdge], 100);
+    Drawer_1.Drawer.drawCircledHotspots(image, [...hotSpotsBlessing, ...hotSpotsTile, ...hotSpotsBottom, ...hotSpotsEdge]);
     console.log('Total blur time: ' + (new Date().getTime() - time.getTime()) / 1000 + 's');
     time = new Date();
     console.log();

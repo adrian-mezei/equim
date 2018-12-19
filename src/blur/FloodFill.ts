@@ -4,23 +4,20 @@ import { BooleanTable } from '../model/BooleanTable';
 
 export class FloodFill {
     
-    private static imageWidth = 4000;
-    private static imageHeight = 2000;
-
-    public static fillArea(boundary: Point[], insidePoint: Point): Mask {
+    public static fillArea(boundary: Point[], insidePoint: Point, imageWidth: number, imageHeight: number): Mask {
         if(!Number.isInteger(insidePoint.x) || !Number.isInteger(insidePoint.y)) throw new Error('Provided insidePoint must be of integer coordinates.');
         
-        const area = this.createBooleanTableStructure(boundary);
+        const area = this.createBooleanTableStructure(boundary, imageWidth, imageHeight);
 
-        this.queuedSurroundingFill(area.data, {x: insidePoint.x - area.xPosition, y: insidePoint.y - area.yPosition});
+        this.queuedSurroundingFill(area.data, {x: insidePoint.x - area.xPosition, y: insidePoint.y - area.yPosition}, imageWidth, imageHeight);
 
         return this.createMaskStructure(area);
     }
 
-    private static createBooleanTableStructure(points: Point[]): BooleanTable {
-        var minX = this.imageWidth;
+    private static createBooleanTableStructure(points: Point[], imageWidth: number, imageHeight: number): BooleanTable {
+        var minX = imageWidth;
         var maxX =  0;
-        var minY = this.imageHeight;
+        var minY = imageHeight;
         var maxY = 0;
         for(const p of points){
             if(p.x > maxX) maxX = p.x;
@@ -79,7 +76,7 @@ export class FloodFill {
         return mask;
     }
 
-    private static queuedSurroundingFill(area: boolean[][], insidePoint: Point){
+    private static queuedSurroundingFill(area: boolean[][], insidePoint: Point, imageWidth: number, imageHeight: number){
         const queue: Point[] = [insidePoint];
         while(queue.length > 0){
             const point = queue.pop()!;
@@ -89,7 +86,7 @@ export class FloodFill {
             if(!area[point.y][point.x]){
                 area[point.y][point.x] = true;
 
-                const surrounding = this.getSurrounding(point, this.imageWidth, this.imageHeight);
+                const surrounding = this.getSurrounding(point, imageWidth, imageHeight);
                 for(const p of surrounding){
                     if(p.y >= area.length || p.y < 0) continue;
                     if(p.x >= area[p.y].length || p.x < 0) continue;

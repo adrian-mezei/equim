@@ -34,37 +34,47 @@ class Blur {
      * @param hotspots The corners of the rectangle to be blured.
      * @param blurIntensity The radius of the blur color averaging.
      */
-    blurEquirectRectangle(image, hotspots, blurIntensity) {
-        if (hotspots.length !== 4)
-            throw new Error('Only quadrilaterals (4 hotspots) are accepted.');
-        /*for(let i=0; i<hotspots.length; i++){
-            if(hotspots[(i+1)%hotspots.length].yaw - hotspots[i].yaw >= 180) return callback(new Error('All consecutive yaws must be less than 180 degrees from each other.'));
-        }*/
-        // check that no two points are too close to each other
-        //if(!noTwoHotspotsAreTooClose(hotspots, 0.1)) return callback(new Error('There are hotspots that are too close to each other.'));
-        // check that the provided point distances cannot be larger than
-        //     the half length of the great circle, otherwise the other
-        //     half of the Great circle is drawn, so in this case, a further point must be added
-        //     (greatCircle with parameter 1.5?)
-        const points = Converter_1.Converter.convertToXYs(hotspots);
-        //let time = new Date();
-        var segmentedBoundary = GreatCircle_1.GreatCircle.segmentAlongGreatCircles(points); // Segment the lines of consecutive hotspots along the Great Circles
-        //console.log('    Segmentation along Great Circle: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
-        const chunks = EdgeDetector_1.EdgeDetector.detectEdges(segmentedBoundary, 0.5); // The corners of the image are added if needed
-        //console.log('    Extension with edges: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
+    blurEquirectRectangle(image, hotspotsArray, blurIntensity) {
+        const masks = [];
+        for (const hotspots of hotspotsArray) {
+            if (hotspots.length !== 4)
+                throw new Error('Only quadrilaterals (4 hotspots) are accepted.');
+            /*for(let i=0; i<hotspots.length; i++){
+                if(hotspots[(i+1)%hotspots.length].yaw - hotspots[i].yaw >= 180) return callback(new Error('All consecutive yaws must be less than 180 degrees from each other.'));
+            }*/
+            // check that no two points are too close to each other
+            //if(!noTwoHotspotsAreTooClose(hotspots, 0.1)) return callback(new Error('There are hotspots that are too close to each other.'));
+            // check that the provided point distances cannot be larger than
+            //     the half length of the great circle, otherwise the other
+            //     half of the Great circle is drawn, so in this case, a further point must be added
+            //     (greatCircle with parameter 1.5?)
+            const points = new Converter_1.Converter(image.getWidth(), image.getHeight()).convertToXYs(hotspots);
+            const gc = new GreatCircle_1.GreatCircle(image.getWidth(), image.getHeight());
+            //let time = new Date();
+            var segmentedBoundary = gc.segmentAlongGreatCircles(points); // Segment the lines of consecutive hotspots along the Great Circles
+            //console.log('    Segmentation along Great Circle: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
+            const chunks = EdgeDetector_1.EdgeDetector.detectEdges(segmentedBoundary, 0.5); // The corners of the image are added if needed
+            //console.log('    Extension with edges: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
+            masks.push(...this.chunksToMasks(image, chunks));
+        }
+        // TODO do the blurs in one step
+        for (let i = 0; i < masks.length; i++)
+            this.blurAtMask(image, masks[i], blurIntensity);
+        //console.log('    Jimp blur: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
+    }
+    chunksToMasks(image, chunks) {
+        const gc = new GreatCircle_1.GreatCircle(image.getWidth(), image.getHeight());
         const masks = [];
         for (let chunk of chunks) {
             var closedBoundary = ClosedLineConnector_1.ClosedLineConnector.connectWithClosedLines(chunk); // Connect the segmented boundaries to closed curves
             //console.log('    Closure of boundaries: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
             // Calculate a point inside the boundary
             const pointAtHalfPerimeter = closedBoundary[Math.round(closedBoundary.length / 2)];
-            const insidePoint = GreatCircle_1.GreatCircle.pointBetweenTwoPoints(closedBoundary[0], pointAtHalfPerimeter, 0.5);
-            masks.push(FloodFill_1.FloodFill.fillArea(closedBoundary, insidePoint)); // Flood fill from the inside point
+            const insidePoint = gc.pointBetweenTwoPoints(closedBoundary[0], pointAtHalfPerimeter, 0.5);
+            masks.push(FloodFill_1.FloodFill.fillArea(closedBoundary, insidePoint, image.getWidth(), image.getHeight())); // Flood fill from the inside point
             //console.log('    Flood fill: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
         }
-        for (let i = 0; i < masks.length; i++)
-            this.blurAtMask(image, masks[i], blurIntensity);
-        //console.log('    Jimp blur: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
+        return masks;
     }
     /**
      * Blurs the part of the image that is described by the mask.
@@ -167,26 +177,32 @@ exports.ClosedLineConnector = ClosedLineConnector;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 class Converter {
-    static convertToXY(h) {
+    constructor(imageWidth, imageHeight) {
+        this.imageWidth = 4000;
+        this.imageHeight = 2000;
+        this.imageWidth = imageWidth;
+        this.imageHeight = imageHeight;
+    }
+    convertToXY(h) {
         return {
             x: (h.yaw + 180) / 360 * this.imageWidth,
             y: this.imageHeight / 2 - (h.pitch / 180) * this.imageHeight
         };
     }
-    static convertToXYs(hotspots) {
+    convertToXYs(hotspots) {
         const points = [];
         for (const h of hotspots) {
             points.push(this.convertToXY(h));
         }
         return points;
     }
-    static convertToYawPitch(p) {
+    convertToYawPitch(p) {
         return {
             yaw: (p.x / this.imageWidth) * 360 - 180,
             pitch: (this.imageHeight / 2 - p.y) / this.imageHeight * 180
         };
     }
-    static convertToYawPitchs(points) {
+    convertToYawPitchs(points) {
         const hotspots = [];
         for (const p of points) {
             hotspots.push(this.convertToYawPitch(p));
@@ -194,8 +210,6 @@ class Converter {
         return hotspots;
     }
 }
-Converter.imageWidth = 4000;
-Converter.imageHeight = 2000;
 exports.Converter = Converter;
 
 },{}],4:[function(require,module,exports){
@@ -350,17 +364,17 @@ exports.EdgeDetector = EdgeDetector;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 class FloodFill {
-    static fillArea(boundary, insidePoint) {
+    static fillArea(boundary, insidePoint, imageWidth, imageHeight) {
         if (!Number.isInteger(insidePoint.x) || !Number.isInteger(insidePoint.y))
             throw new Error('Provided insidePoint must be of integer coordinates.');
-        const area = this.createBooleanTableStructure(boundary);
-        this.queuedSurroundingFill(area.data, { x: insidePoint.x - area.xPosition, y: insidePoint.y - area.yPosition });
+        const area = this.createBooleanTableStructure(boundary, imageWidth, imageHeight);
+        this.queuedSurroundingFill(area.data, { x: insidePoint.x - area.xPosition, y: insidePoint.y - area.yPosition }, imageWidth, imageHeight);
         return this.createMaskStructure(area);
     }
-    static createBooleanTableStructure(points) {
-        var minX = this.imageWidth;
+    static createBooleanTableStructure(points, imageWidth, imageHeight) {
+        var minX = imageWidth;
         var maxX = 0;
-        var minY = this.imageHeight;
+        var minY = imageHeight;
         var maxY = 0;
         for (const p of points) {
             if (p.x > maxX)
@@ -415,7 +429,7 @@ class FloodFill {
         }
         return mask;
     }
-    static queuedSurroundingFill(area, insidePoint) {
+    static queuedSurroundingFill(area, insidePoint, imageWidth, imageHeight) {
         const queue = [insidePoint];
         while (queue.length > 0) {
             const point = queue.pop();
@@ -425,7 +439,7 @@ class FloodFill {
                 continue;
             if (!area[point.y][point.x]) {
                 area[point.y][point.x] = true;
-                const surrounding = this.getSurrounding(point, this.imageWidth, this.imageHeight);
+                const surrounding = this.getSurrounding(point, imageWidth, imageHeight);
                 for (const p of surrounding) {
                     if (p.y >= area.length || p.y < 0)
                         continue;
@@ -474,8 +488,6 @@ class FloodFill {
         return surrounding;
     }
 }
-FloodFill.imageWidth = 4000;
-FloodFill.imageHeight = 2000;
 exports.FloodFill = FloodFill;
 
 },{}],6:[function(require,module,exports){
@@ -483,6 +495,11 @@ exports.FloodFill = FloodFill;
 Object.defineProperty(exports, "__esModule", { value: true });
 const Converter_1 = require("./Converter");
 class GreatCircle {
+    constructor(imageWidth, imageHeight) {
+        this.imageWidth = imageWidth;
+        this.imageHeight = imageHeight;
+        this.converter = new Converter_1.Converter(this.imageWidth, this.imageHeight);
+    }
     /**
      * Segments each line segment of the consecutive point pairs of the provided points
      * along the Great Circle.
@@ -491,7 +508,7 @@ class GreatCircle {
      *
      * @returns The array of generated points including the provided points.
      */
-    static segmentAlongGreatCircles(points) {
+    segmentAlongGreatCircles(points) {
         var segmentedBoundary = [];
         for (var i = 0; i < points.length; i++) {
             const point1 = points[i];
@@ -512,7 +529,7 @@ class GreatCircle {
      *
      * @returns The array of generated points including the provided point1 and excluding the provided point2.
      */
-    static segmentAlongGreatCircle(point1, point2, numberOfGeneratedPoints) {
+    segmentAlongGreatCircle(point1, point2, numberOfGeneratedPoints) {
         const boundingPoints = [];
         for (var i = 0; i <= 1; i += 1 / numberOfGeneratedPoints) {
             boundingPoints.push(this.pointBetweenTwoPoints(point1, point2, i));
@@ -527,9 +544,9 @@ class GreatCircle {
      * @param t The parameter where the Great Circle is evaluated. This parameter
      * is 0 at point1 and 1 at point2.
      */
-    static pointBetweenTwoPoints(point1, point2, t) {
-        const hotspot1 = Converter_1.Converter.convertToYawPitch(point1);
-        const hotspot2 = Converter_1.Converter.convertToYawPitch(point2);
+    pointBetweenTwoPoints(point1, point2, t) {
+        const hotspot1 = this.converter.convertToYawPitch(point1);
+        const hotspot2 = this.converter.convertToYawPitch(point2);
         const h1 = {
             yaw: hotspot1.yaw / 180.0 * Math.PI,
             pitch: hotspot1.pitch / 180.0 * Math.PI
@@ -549,7 +566,7 @@ class GreatCircle {
             yaw: Math.atan2(y, x) / Math.PI * 180,
             pitch: Math.atan2(z, Math.sqrt(x * x + y * y)) / Math.PI * 180
         };
-        const p = Converter_1.Converter.convertToXY(hotspot);
+        const p = this.converter.convertToXY(hotspot);
         return { x: Math.round(p.x), y: Math.round(p.y) };
     }
 }
