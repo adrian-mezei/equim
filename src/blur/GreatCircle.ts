@@ -1,4 +1,4 @@
-import { Converter } from './Converter';
+import { Converter } from '../util/Converter';
 import { Hotspot } from '../model/Hotspot';
 import { Point } from '../model/Point';
 

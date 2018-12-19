@@ -1,12 +1,12 @@
-$sourcePath = '.\build\blur\Blur.js';
+$sourcePath = '.\build\Equim.js';
 $targetPath = '.\example\js';
-$targetFileName = 'blur.js'
+$targetFileName = 'equim.js'
 
 browserify --external jimp $sourcePath -o $($targetPath + '\' + $targetFileName)
 
 $blurFile = Get-Content $($targetPath + '\' + $targetFileName);
 $replacedBlurFile = $blurFile.replace('const Jimp = require("jimp");', '');
-$replacedBlurFile = $replacedBlurFile.replace('exports.Blur = Blur;', 'exports.Blur = Blur;' + [Environment]::NewLine + 'window.blur = new Blur();');
+$replacedBlurFile = $replacedBlurFile.replace('exports.Equim = Equim;', 'exports.Equim = Equim;' + [Environment]::NewLine + 'window.equim = Equim;');
 
 $replacedBlurFile = ($replacedBlurFile | Out-String).Trim();
 New-Item -Path $targetPath -Name $targetFileName -ItemType "file" -Force -Value $replacedBlurFile | Out-Null;

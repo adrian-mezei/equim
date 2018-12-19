@@ -1,34 +1,50 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const Blur_1 = require("./blur/Blur");
+
+class Equim {
+    static getBase64(image, callback) {
+        image.getBase64(image.getMIME(), callback);
+    }
+    static read(imagePath, callback) {
+        Jimp.read(imagePath).then(image => callback(undefined, image));
+    }
+    static writeToFile(image, path, callback) {
+        image.write(path, (err) => {
+            callback(err);
+        });
+    }
+}
+Equim.blur = new Blur_1.Blur();
+exports.Equim = Equim;
+window.equim = Equim;
+
+},{"./blur/Blur":2,"jimp":"jimp"}],2:[function(require,module,exports){
 (function (Buffer){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 
-const Converter_1 = require("./Converter");
+const Converter_1 = require("../util/Converter");
 const GreatCircle_1 = require("./GreatCircle");
 const EdgeDetector_1 = require("./EdgeDetector");
 const FloodFill_1 = require("./FloodFill");
 const ClosedLineConnector_1 = require("./ClosedLineConnector");
 class Blur {
-    blurFull(image, blurIntensity, targetPath) {
-        image
-            .blur(blurIntensity)
-            .write(targetPath);
-    }
-    getBase64(image, callback) {
-        image.getBase64(image.getMIME(), callback);
-    }
-    read(imagePath, callback) {
-        Jimp.read(imagePath).then(image => callback(undefined, image));
-    }
-    writeToFile(image, path, callback) {
-        image.write(path, (err) => {
-            callback(err);
-        });
+    /**
+     * Blurs the whole image with fast blur.
+     *
+     * @param image The image to blure.
+     * @param blurIntensity The radius of the blur color averaging.
+     */
+    blurFull(image, blurIntensity) {
+        image.blur(blurIntensity);
     }
     /**
      * Blurs the rectangular part of the image that is described by four hotspots. The blured
      * part is rectangular from the point of view of the camera that is in the center of the sphere
-     * of the equirectangular space.
+     * of the equirectangularly projected space. The given four points divide the sphere into two
+     * parts. The one that contains the midpoint of the first and the third hotspost is bing blured.
      *
      * @param image The image to blure at the rectangular part bounded by the hotspots.
      * @param hotspots The corners of the rectangle to be blured.
@@ -69,8 +85,8 @@ class Blur {
             var closedBoundary = ClosedLineConnector_1.ClosedLineConnector.connectWithClosedLines(chunk); // Connect the segmented boundaries to closed curves
             //console.log('    Closure of boundaries: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
             // Calculate a point inside the boundary
-            const pointAtHalfPerimeter = closedBoundary[Math.round(closedBoundary.length / 2)];
-            const insidePoint = gc.pointBetweenTwoPoints(closedBoundary[0], pointAtHalfPerimeter, 0.5);
+            const pointAtHalfDiagonal = closedBoundary[Math.round(closedBoundary.length / 2)];
+            const insidePoint = gc.pointBetweenTwoPoints(closedBoundary[0], pointAtHalfDiagonal, 0.5);
             masks.push(FloodFill_1.FloodFill.fillArea(closedBoundary, insidePoint, image.getWidth(), image.getHeight())); // Flood fill from the inside point
             //console.log('    Flood fill: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
         }
@@ -103,10 +119,9 @@ class Blur {
     }
 }
 exports.Blur = Blur;
-window.blur = new Blur();
 
 }).call(this,require("buffer").Buffer)
-},{"./ClosedLineConnector":2,"./Converter":3,"./EdgeDetector":4,"./FloodFill":5,"./GreatCircle":6,"buffer":9,"jimp":"jimp"}],2:[function(require,module,exports){
+},{"../util/Converter":8,"./ClosedLineConnector":3,"./EdgeDetector":4,"./FloodFill":5,"./GreatCircle":6,"buffer":10,"jimp":"jimp"}],3:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 class ClosedLineConnector {
@@ -172,45 +187,6 @@ class ClosedLineConnector {
     }
 }
 exports.ClosedLineConnector = ClosedLineConnector;
-
-},{}],3:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-class Converter {
-    constructor(imageWidth, imageHeight) {
-        this.imageWidth = 4000;
-        this.imageHeight = 2000;
-        this.imageWidth = imageWidth;
-        this.imageHeight = imageHeight;
-    }
-    convertToXY(h) {
-        return {
-            x: (h.yaw + 180) / 360 * this.imageWidth,
-            y: this.imageHeight / 2 - (h.pitch / 180) * this.imageHeight
-        };
-    }
-    convertToXYs(hotspots) {
-        const points = [];
-        for (const h of hotspots) {
-            points.push(this.convertToXY(h));
-        }
-        return points;
-    }
-    convertToYawPitch(p) {
-        return {
-            yaw: (p.x / this.imageWidth) * 360 - 180,
-            pitch: (this.imageHeight / 2 - p.y) / this.imageHeight * 180
-        };
-    }
-    convertToYawPitchs(points) {
-        const hotspots = [];
-        for (const p of points) {
-            hotspots.push(this.convertToYawPitch(p));
-        }
-        return hotspots;
-    }
-}
-exports.Converter = Converter;
 
 },{}],4:[function(require,module,exports){
 "use strict";
@@ -493,7 +469,8 @@ exports.FloodFill = FloodFill;
 },{}],6:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const Converter_1 = require("./Converter");
+const Converter_1 = require("../util/Converter");
+// useful source: http://www.movable-type.co.uk/scripts/latlong.html
 class GreatCircle {
     constructor(imageWidth, imageHeight) {
         this.imageWidth = imageWidth;
@@ -572,7 +549,7 @@ class GreatCircle {
 }
 exports.GreatCircle = GreatCircle;
 
-},{"./Converter":3}],7:[function(require,module,exports){
+},{"../util/Converter":8}],7:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var EdgeCrossingType;
@@ -584,6 +561,45 @@ var EdgeCrossingType;
 })(EdgeCrossingType = exports.EdgeCrossingType || (exports.EdgeCrossingType = {}));
 
 },{}],8:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+class Converter {
+    constructor(imageWidth, imageHeight) {
+        this.imageWidth = 4000;
+        this.imageHeight = 2000;
+        this.imageWidth = imageWidth;
+        this.imageHeight = imageHeight;
+    }
+    convertToXY(h) {
+        return {
+            x: (h.yaw + 180) / 360 * this.imageWidth,
+            y: this.imageHeight / 2 - (h.pitch / 180) * this.imageHeight
+        };
+    }
+    convertToXYs(hotspots) {
+        const points = [];
+        for (const h of hotspots) {
+            points.push(this.convertToXY(h));
+        }
+        return points;
+    }
+    convertToYawPitch(p) {
+        return {
+            yaw: (p.x / this.imageWidth) * 360 - 180,
+            pitch: (this.imageHeight / 2 - p.y) / this.imageHeight * 180
+        };
+    }
+    convertToYawPitchs(points) {
+        const hotspots = [];
+        for (const p of points) {
+            hotspots.push(this.convertToYawPitch(p));
+        }
+        return hotspots;
+    }
+}
+exports.Converter = Converter;
+
+},{}],9:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -736,7 +752,7 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -2515,7 +2531,7 @@ function numberIsNaN (obj) {
   return obj !== obj // eslint-disable-line no-self-compare
 }
 
-},{"base64-js":8,"ieee754":10}],10:[function(require,module,exports){
+},{"base64-js":9,"ieee754":11}],11:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = (nBytes * 8) - mLen - 1

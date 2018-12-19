@@ -1,7 +1,7 @@
 import Jimp = require('jimp');
 import { Point } from '../model/Point';
 import { Hotspot } from '../model/Hotspot';
-import { Converter } from './Converter';
+import { Converter } from '../util/Converter';
 import { GreatCircle } from './GreatCircle';
 import { EdgeDetector } from './EdgeDetector';
 import { FloodFill } from './FloodFill';
@@ -10,30 +10,21 @@ import { Mask } from '../model/Mask';
 
 export class Blur {
 
-    public blurFull(image: Jimp, blurIntensity: number, targetPath: string) {
-        image
-            .blur(blurIntensity)
-            .write(targetPath);
-    }
-
-    public getBase64(image: Jimp, callback: (err: Error | null, imageBase64: string) => void): void {
-        image.getBase64(image.getMIME(), callback);
-    }
-
-    public read(imagePath: string, callback: (err: Error | undefined, image: Jimp) => void): void {
-        Jimp.read(imagePath).then(image  => callback(undefined, image));
-    }
-
-    public writeToFile(image: Jimp, path: string, callback: (err: Error | null) => void): void {
-        image.write(path, (err) => {
-            callback(err);
-        });
+    /**
+     * Blurs the whole image with fast blur.
+     * 
+     * @param image The image to blure.
+     * @param blurIntensity The radius of the blur color averaging.
+     */
+    public blurFull(image: Jimp, blurIntensity: number) {
+        image.blur(blurIntensity);
     }
 
     /**
      * Blurs the rectangular part of the image that is described by four hotspots. The blured
      * part is rectangular from the point of view of the camera that is in the center of the sphere
-     * of the equirectangular space.
+     * of the equirectangularly projected space. The given four points divide the sphere into two 
+     * parts. The one that contains the midpoint of the first and the third hotspost is bing blured.
      * 
      * @param image The image to blure at the rectangular part bounded by the hotspots.
      * @param hotspots The corners of the rectangle to be blured.
@@ -81,8 +72,8 @@ export class Blur {
             //console.log('    Closure of boundaries: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
             
             // Calculate a point inside the boundary
-            const pointAtHalfPerimeter = closedBoundary[Math.round(closedBoundary.length/2)];
-            const insidePoint = gc.pointBetweenTwoPoints(closedBoundary[0], pointAtHalfPerimeter, 0.5);
+            const pointAtHalfDiagonal = closedBoundary[Math.round(closedBoundary.length/2)];
+            const insidePoint = gc.pointBetweenTwoPoints(closedBoundary[0], pointAtHalfDiagonal, 0.5);
             
             masks.push(FloodFill.fillArea(closedBoundary, insidePoint, image.getWidth(), image.getHeight())); // Flood fill from the inside point
             //console.log('    Flood fill: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();

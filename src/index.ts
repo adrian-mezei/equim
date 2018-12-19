@@ -1,7 +1,5 @@
-import { Blur } from './blur/Blur';
-import { Drawer } from './blur/Drawer';
-
-const blur = new Blur();
+import { Equim as equim } from './Equim';
+import { Drawer } from './util/Drawer';
 
 //const imagePath = 'https://s3-eu-west-1.amazonaws.com/equim.toura.io/panoramas/dom.jpg';
 const imagePath = 'https://s3-eu-west-1.amazonaws.com/equim.toura.io/panoramas/room.jpg';
@@ -74,26 +72,24 @@ const hotSpotsConcave = [
     { yaw: -20,  pitch: -20 }
 ];
 
-blur.read(imagePath, (err, image) => {
+equim.read(imagePath, (err, image) => {
     if(err || !image) return console.log(err);
 
     console.log('Read time: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
     console.log();
  
-    blur.blurEquirectRectangle(image, [hotSpotsBlessing, hotSpotsTile, hotSpotsBottom, hotSpotsEdge], 100);
+    equim.blur.blurEquirectRectangle(image, [hotSpotsBlessing, hotSpotsTile, hotSpotsBottom, hotSpotsEdge], 100);
         
     Drawer.drawCircledHotspots(image, [...hotSpotsBlessing, ...hotSpotsTile, ...hotSpotsBottom, ...hotSpotsEdge]);
 
     console.log('Total blur time: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
     console.log();
 
-    blur.writeToFile(image, 'out/equirectangular.jpg', (err) => {
+    equim.writeToFile(image, 'out/equirectangular.jpg', (err) => {
         if(err) return console.log(err);
 
         console.log('Write to file time: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
         console.log();
         console.log('Total runtime: ' + (new Date().getTime() - beginTime.getTime())/1000 + 's');
-
-        if(err) console.log(err);
     });
 });

@@ -11,7 +11,7 @@
 
         <script type="text/javascript" src="../js/pannellum.js"></script>
         <script type="text/javascript" src="../js/jimp.min.js"></script>
-        <script type="text/javascript" src="../js/blur.js"></script>
+        <script type="text/javascript" src="../js/equim.js"></script>
 
         <style>
             #panorama {
@@ -49,13 +49,13 @@
                 ]
             ];
 
-            blur.read(imagePath, (err, image) => {
+            equim.read(imagePath, (err, image) => {
                 if(err) return console.log(err);
                 document.getElementById('originalImage').src = imagePath;
 
-                blur.blurEquirectRectangle(image, blurAreas, 100);
+                equim.blur.blurEquirectRectangle(image, blurAreas, 100);
                 
-                blur.getBase64(image, (err, imageBase64) => {
+                equim.getBase64(image, (err, imageBase64) => {
                     if(err) return console.log(err);
                     document.getElementById('bluredImage').src = imageBase64;
                     

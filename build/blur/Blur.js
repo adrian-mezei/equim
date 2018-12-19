@@ -1,32 +1,26 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const Jimp = require("jimp");
-const Converter_1 = require("./Converter");
+const Converter_1 = require("../util/Converter");
 const GreatCircle_1 = require("./GreatCircle");
 const EdgeDetector_1 = require("./EdgeDetector");
 const FloodFill_1 = require("./FloodFill");
 const ClosedLineConnector_1 = require("./ClosedLineConnector");
 class Blur {
-    blurFull(image, blurIntensity, targetPath) {
-        image
-            .blur(blurIntensity)
-            .write(targetPath);
-    }
-    getBase64(image, callback) {
-        image.getBase64(image.getMIME(), callback);
-    }
-    read(imagePath, callback) {
-        Jimp.read(imagePath).then(image => callback(undefined, image));
-    }
-    writeToFile(image, path, callback) {
-        image.write(path, (err) => {
-            callback(err);
-        });
+    /**
+     * Blurs the whole image with fast blur.
+     *
+     * @param image The image to blure.
+     * @param blurIntensity The radius of the blur color averaging.
+     */
+    blurFull(image, blurIntensity) {
+        image.blur(blurIntensity);
     }
     /**
      * Blurs the rectangular part of the image that is described by four hotspots. The blured
      * part is rectangular from the point of view of the camera that is in the center of the sphere
-     * of the equirectangular space.
+     * of the equirectangularly projected space. The given four points divide the sphere into two
+     * parts. The one that contains the midpoint of the first and the third hotspost is bing blured.
      *
      * @param image The image to blure at the rectangular part bounded by the hotspots.
      * @param hotspots The corners of the rectangle to be blured.
@@ -67,8 +61,8 @@ class Blur {
             var closedBoundary = ClosedLineConnector_1.ClosedLineConnector.connectWithClosedLines(chunk); // Connect the segmented boundaries to closed curves
             //console.log('    Closure of boundaries: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
             // Calculate a point inside the boundary
-            const pointAtHalfPerimeter = closedBoundary[Math.round(closedBoundary.length / 2)];
-            const insidePoint = gc.pointBetweenTwoPoints(closedBoundary[0], pointAtHalfPerimeter, 0.5);
+            const pointAtHalfDiagonal = closedBoundary[Math.round(closedBoundary.length / 2)];
+            const insidePoint = gc.pointBetweenTwoPoints(closedBoundary[0], pointAtHalfDiagonal, 0.5);
             masks.push(FloodFill_1.FloodFill.fillArea(closedBoundary, insidePoint, image.getWidth(), image.getHeight())); // Flood fill from the inside point
             //console.log('    Flood fill: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
         }

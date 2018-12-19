@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const Converter_1 = require("./Converter");
+const Converter_1 = require("../util/Converter");
 // useful source: http://www.movable-type.co.uk/scripts/latlong.html
 class GreatCircle {
     constructor(imageWidth, imageHeight) {

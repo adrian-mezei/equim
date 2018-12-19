@@ -3,9 +3,9 @@ import { Point } from '../model/Point';
 import { Rgba } from '../model/Rgba';
 import { Hotspot } from '../model/Hotspot';
 import { Converter } from './Converter';
-import { GreatCircle } from './GreatCircle';
-import { ClosedLineConnector } from './ClosedLineConnector';
-import { EdgeDetector } from './EdgeDetector';
+import { GreatCircle } from '../blur/GreatCircle';
+import { ClosedLineConnector } from '../blur/ClosedLineConnector';
+import { EdgeDetector } from '../blur/EdgeDetector';
 
 export class Drawer {
 

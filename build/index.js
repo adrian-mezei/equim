@@ -1,8 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const Blur_1 = require("./blur/Blur");
-const Drawer_1 = require("./blur/Drawer");
-const blur = new Blur_1.Blur();
+const Equim_1 = require("./Equim");
+const Drawer_1 = require("./util/Drawer");
 //const imagePath = 'https://s3-eu-west-1.amazonaws.com/equim.toura.io/panoramas/dom.jpg';
 const imagePath = 'https://s3-eu-west-1.amazonaws.com/equim.toura.io/panoramas/room.jpg';
 let beginTime = new Date();
@@ -63,25 +62,23 @@ const hotSpotsConcave = [
     { yaw: 20, pitch: -20 },
     { yaw: -20, pitch: -20 }
 ];
-blur.read(imagePath, (err, image) => {
+Equim_1.Equim.read(imagePath, (err, image) => {
     if (err || !image)
         return console.log(err);
     console.log('Read time: ' + (new Date().getTime() - time.getTime()) / 1000 + 's');
     time = new Date();
     console.log();
-    blur.blurEquirectRectangle(image, [hotSpotsBlessing, hotSpotsTile, hotSpotsBottom, hotSpotsEdge], 100);
+    Equim_1.Equim.blur.blurEquirectRectangle(image, [hotSpotsBlessing, hotSpotsTile, hotSpotsBottom, hotSpotsEdge], 100);
     Drawer_1.Drawer.drawCircledHotspots(image, [...hotSpotsBlessing, ...hotSpotsTile, ...hotSpotsBottom, ...hotSpotsEdge]);
     console.log('Total blur time: ' + (new Date().getTime() - time.getTime()) / 1000 + 's');
     time = new Date();
     console.log();
-    blur.writeToFile(image, 'out/equirectangular.jpg', (err) => {
+    Equim_1.Equim.writeToFile(image, 'out/equirectangular.jpg', (err) => {
         if (err)
             return console.log(err);
         console.log('Write to file time: ' + (new Date().getTime() - time.getTime()) / 1000 + 's');
         time = new Date();
         console.log();
         console.log('Total runtime: ' + (new Date().getTime() - beginTime.getTime()) / 1000 + 's');
-        if (err)
-            console.log(err);
     });
 });
