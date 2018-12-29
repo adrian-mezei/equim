@@ -1,6 +1,7 @@
 # Equim
 ### Equirectangular image manipulation both in browser and server side.
- 
+[![Build Status](https://travis-ci.org/adrian-mezei/equim.svg?branch=master)](https://travis-ci.org/adrian-mezei/equim)
+
 ---
 At [Toura](https://toura.io/), we process equirectangular images and do realtime image manipulation on them in the browser.
 
