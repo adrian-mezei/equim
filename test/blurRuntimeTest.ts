@@ -1,5 +1,5 @@
-import { expect } from 'chai';
-import { Equim } from './../src/Equim';
+import { expect, assert } from 'chai';
+import { Equim } from '../src/Equim';
 import Jimp = require('jimp');
 
 const imagePath = './res/equirectangularRED.jpg';
@@ -10,7 +10,9 @@ describe('Blur', function() {
         this.timeout(3000);
         
         Equim.read(imagePath, function(err, testImage){
-            image = testImage;
+            if(err || !testImage) return done(new Error('Image could not be loaded.'));
+            
+            image = testImage!;
             done();
         });
     });
@@ -96,8 +98,8 @@ describe('Blur', function() {
     });
 
     describe('of hotspotsEdge', function() {
-        it('should be executed without error under 13000ms', function() {
-            this.timeout(13000);
+        it('should be executed without error under 3000ms', function() {
+            this.timeout(3000);
 
             const hotSpotsEdge = [
                 // longitude(yaw) -180 - +180; latitude(pitch): -90 - +90

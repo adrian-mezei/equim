@@ -7,7 +7,23 @@ class Equim {
         image.getBase64(image.getMIME(), callback);
     }
     static read(imagePath, callback) {
-        Jimp.read(imagePath).then(image => callback(undefined, image));
+        Jimp.read(imagePath)
+            .then(image => callback(undefined, image))
+            .catch(e => {
+            callback(e, undefined);
+        });
+    }
+    static readBase64(imageBase64, callback) {
+        if (imageBase64.indexOf('data:image/jpeg;base64,') != -1) {
+            imageBase64 = imageBase64.replace(/^data:image\/jpeg;base64,/, '');
+        }
+        Jimp.read(Buffer.from(imageBase64, 'base64'))
+            .then(jimp => {
+            callback(undefined, jimp);
+        })
+            .catch(e => {
+            callback(e, undefined);
+        });
     }
     static writeToFile(image, path, callback) {
         image.write(path, (err) => {

@@ -1,5 +1,5 @@
 # Equim
-### Equirectangular image manipulation in the browser.
+### Equirectangular image manipulation both in browser and server side.
  
 ---
 At [Toura](https://toura.io/), we process equirectangular images and do realtime image manipulation on them in the browser.
@@ -20,9 +20,18 @@ At server side the provided TS files can be used until the project is not availa
 The generated equim.js must be included in the HTML page.  Since the library uses [Jimp](https://github.com/oliver-moran/jimp), it is required to include [Jimp from CDN](https://www.jsdelivr.com/package/npm/jimp) as well. Having these done, the equim object is visible at global scope and can be used as described below.
 
 ### Read file
+From URL
 ```javascript
 const imagePath = 'https://s3-eu-west-1.amazonaws.com/equim.toura.io/panoramas/room.jpg';
 equim.read(imagePath, (err, image) => {
+    // image is availale as a Jimp
+});
+```
+
+From base64 encoded string
+```javascript
+const imageBase64 = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDA...';
+equim.read(imageBase64, (err, image) => {
     // image is availale as a Jimp
 });
 ```
@@ -34,7 +43,7 @@ equim.writeToFile(image, 'equirectangular.jpg', (err) => {
 });
 ```
 
-### Get image base64 encoded
+### Get base64 encoded image
 ```javascript
 equim.getBase64(image, (err, imageBase64) => {
     // base64 encoded image
