@@ -1,11 +1,20 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 class FloodFill {
-    static fillArea(boundary, insidePoint, imageWidth, imageHeight) {
-        if (!Number.isInteger(insidePoint.x) || !Number.isInteger(insidePoint.y))
-            throw new Error('Provided insidePoint must be of integer coordinates.');
+    static fillArea(boundary, insidePoints, imageWidth, imageHeight) {
+        for (const insidePoint of insidePoints) {
+            if (!Number.isInteger(insidePoint.x) || !Number.isInteger(insidePoint.y))
+                throw new Error('Provided insidePoint must be of integer coordinates.');
+        }
         const area = this.createBooleanTableStructure(boundary, imageWidth, imageHeight);
-        this.queuedSurroundingFill(area.data, { x: insidePoint.x - area.xPosition, y: insidePoint.y - area.yPosition }, imageWidth, imageHeight);
+        const insidePointsModified = [];
+        for (const insidePoint of insidePoints) {
+            insidePointsModified.push({
+                x: insidePoint.x - area.xPosition,
+                y: insidePoint.y - area.yPosition
+            });
+        }
+        this.queuedSurroundingFill(area.data, insidePointsModified, imageWidth, imageHeight);
         return this.createMaskStructure(area);
     }
     static createBooleanTableStructure(points, imageWidth, imageHeight) {
@@ -66,8 +75,8 @@ class FloodFill {
         }
         return mask;
     }
-    static queuedSurroundingFill(area, insidePoint, imageWidth, imageHeight) {
-        const queue = [insidePoint];
+    static queuedSurroundingFill(area, insidePoints, imageWidth, imageHeight) {
+        const queue = insidePoints;
         while (queue.length > 0) {
             const point = queue.pop();
             if (point.y >= area.length || point.y < 0)

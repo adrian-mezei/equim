@@ -4,12 +4,21 @@ import { BooleanTable } from '../model/BooleanTable';
 
 export class FloodFill {
     
-    public static fillArea(boundary: Point[], insidePoint: Point, imageWidth: number, imageHeight: number): Mask {
-        if(!Number.isInteger(insidePoint.x) || !Number.isInteger(insidePoint.y)) throw new Error('Provided insidePoint must be of integer coordinates.');
+    public static fillArea(boundary: Point[], insidePoints: Point[], imageWidth: number, imageHeight: number): Mask {
+        for(const insidePoint of insidePoints) {
+            if(!Number.isInteger(insidePoint.x) || !Number.isInteger(insidePoint.y)) throw new Error('Provided insidePoint must be of integer coordinates.');
+        }
         
         const area = this.createBooleanTableStructure(boundary, imageWidth, imageHeight);
 
-        this.queuedSurroundingFill(area.data, {x: insidePoint.x - area.xPosition, y: insidePoint.y - area.yPosition}, imageWidth, imageHeight);
+        const insidePointsModified = [];
+        for(const insidePoint of insidePoints) {
+            insidePointsModified.push({
+                x: insidePoint.x - area.xPosition,
+                y: insidePoint.y - area.yPosition
+            });
+        }
+        this.queuedSurroundingFill(area.data, insidePointsModified, imageWidth, imageHeight);
 
         return this.createMaskStructure(area);
     }
@@ -43,7 +52,6 @@ export class FloodFill {
             const p: Point = {x: points[i].x - minX, y: points[i].y - minY};
             area[p.y][p.x] = true;
         }
-
         return {
             xPosition: minX,
             yPosition: minY,
@@ -76,8 +84,8 @@ export class FloodFill {
         return mask;
     }
 
-    private static queuedSurroundingFill(area: boolean[][], insidePoint: Point, imageWidth: number, imageHeight: number){
-        const queue: Point[] = [insidePoint];
+    private static queuedSurroundingFill(area: boolean[][], insidePoints: Point[], imageWidth: number, imageHeight: number){
+        const queue: Point[] = insidePoints;
         while(queue.length > 0){
             const point = queue.pop()!;
             if(point.y >= area.length || point.y < 0) continue;

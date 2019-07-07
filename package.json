@@ -5,7 +5,7 @@
     "main": "index.js",
     "scripts": {
         "test": "mocha --require ts-node/register test/**/*.ts",
-        "copyBlurFile": "@powershell -NoProfile -ExecutionPolicy Unrestricted -Command ./scripts/copyBlur.ps1"
+        "copyBlurToExample": "@powershell -NoProfile -ExecutionPolicy Unrestricted -Command ./scripts/copyBlur.ps1"
     },
     "author": "",
     "license": "ISC",

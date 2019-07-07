@@ -55,7 +55,7 @@ export class Blur {
             const chunks = EdgeDetector.detectEdges(segmentedBoundary, 0.5); // The corners of the image are added if needed
             //console.log('    Extension with edges: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
 
-            masks.push(...this.chunksToMasks(image, chunks));
+            masks.push(...this.chunksToMasks(image, points[0], points[2], chunks));
         }
 
         // TODO do the blurs in one step
@@ -63,7 +63,7 @@ export class Blur {
         //console.log('    Jimp blur: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
     }
 
-    private chunksToMasks(image: Jimp, chunks: Point[][]): Mask[] {
+    private chunksToMasks(image: Jimp, hotspot1: Point, hotspot2: Point, chunks: Point[][]): Mask[] {
         const gc = new GreatCircle(image.getWidth(), image.getHeight());
 
         const masks: Mask[] = [];
@@ -71,11 +71,11 @@ export class Blur {
             var closedBoundary = ClosedLineConnector.connectWithClosedLines(chunk); // Connect the segmented boundaries to closed curves
             //console.log('    Closure of boundaries: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
             
-            // Calculate a point inside the boundary
-            const pointAtHalfDiagonal = closedBoundary[Math.round(closedBoundary.length/2)];
-            const insidePoint = gc.pointBetweenTwoPoints(closedBoundary[0], pointAtHalfDiagonal, 0.5);
+            // Calculate points inside the boundary
+            const insidePoints = [];
+            for(let i=0; i<1; i+=0.1)  insidePoints.push(gc.pointBetweenTwoPoints(hotspot1, hotspot2, i));
             
-            masks.push(FloodFill.fillArea(closedBoundary, insidePoint, image.getWidth(), image.getHeight())); // Flood fill from the inside point
+            masks.push(FloodFill.fillArea(closedBoundary, insidePoints, image.getWidth(), image.getHeight())); // Flood fill from the inside point
             //console.log('    Flood fill: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
         }
         return masks;

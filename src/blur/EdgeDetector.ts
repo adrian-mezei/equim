@@ -12,7 +12,7 @@ export class EdgeDetector {
      * rare sides. If there is such pair of points, then further points are
      * inserted and the points may also be divided into chunks. 
      * 
-     * @param points The points to be extended by the corners is needed.
+     * @param points The points to be extended by the corners if needed.
      * @param sideDistance The distance from the side to be considered close.
      */
     public static detectEdges(points: Point[], sideDistance: number): Point[][]{

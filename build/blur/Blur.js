@@ -47,23 +47,24 @@ class Blur {
             //console.log('    Segmentation along Great Circle: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
             const chunks = EdgeDetector_1.EdgeDetector.detectEdges(segmentedBoundary, 0.5); // The corners of the image are added if needed
             //console.log('    Extension with edges: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
-            masks.push(...this.chunksToMasks(image, chunks));
+            masks.push(...this.chunksToMasks(image, points[0], points[2], chunks));
         }
         // TODO do the blurs in one step
         for (let i = 0; i < masks.length; i++)
             this.blurAtMask(image, masks[i], blurIntensity);
         //console.log('    Jimp blur: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
     }
-    chunksToMasks(image, chunks) {
+    chunksToMasks(image, hotspot1, hotspot2, chunks) {
         const gc = new GreatCircle_1.GreatCircle(image.getWidth(), image.getHeight());
         const masks = [];
         for (let chunk of chunks) {
             var closedBoundary = ClosedLineConnector_1.ClosedLineConnector.connectWithClosedLines(chunk); // Connect the segmented boundaries to closed curves
             //console.log('    Closure of boundaries: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
-            // Calculate a point inside the boundary
-            const pointAtHalfDiagonal = closedBoundary[Math.round(closedBoundary.length / 2)];
-            const insidePoint = gc.pointBetweenTwoPoints(closedBoundary[0], pointAtHalfDiagonal, 0.5);
-            masks.push(FloodFill_1.FloodFill.fillArea(closedBoundary, insidePoint, image.getWidth(), image.getHeight())); // Flood fill from the inside point
+            // Calculate points inside the boundary
+            const insidePoints = [];
+            for (let i = 0; i < 1; i += 0.1)
+                insidePoints.push(gc.pointBetweenTwoPoints(hotspot1, hotspot2, i));
+            masks.push(FloodFill_1.FloodFill.fillArea(closedBoundary, insidePoints, image.getWidth(), image.getHeight())); // Flood fill from the inside point
             //console.log('    Flood fill: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
         }
         return masks;
