@@ -52,7 +52,7 @@ export class Blur {
             //let time = new Date();
             var segmentedBoundary = gc.segmentAlongGreatCircles(points); // Segment the lines of consecutive hotspots along the Great Circles
             //console.log('    Segmentation along Great Circle: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
-            const chunks = EdgeDetector.detectEdges(segmentedBoundary, 0.5); // The corners of the image are added if needed
+            const chunks = new EdgeDetector(image.getWidth(), image.getHeight()).detectEdges(segmentedBoundary, 0.5); // The corners of the image are added if needed
             //console.log('    Extension with edges: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
 
             masks.push(...this.chunksToMasks(image, points[0], points[2], chunks));
@@ -89,7 +89,7 @@ export class Blur {
      * @param blurIntensity The radius of the blur color averaging.
      */
     private blurAtMask(image: Jimp, mask: Mask, blurIntensity: number) {
-        let time = new Date();
+        //let time = new Date();
         
         let jimp = new Jimp(mask.width, mask.height, 0);
         //console.log('        Jimp mask image creation: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();

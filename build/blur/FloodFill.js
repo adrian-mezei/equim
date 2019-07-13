@@ -42,7 +42,6 @@ class FloodFill {
             }
             area.push(row);
         }
-        // shift back the points both horizontally and vertically by the smallest values
         for (var i = 0; i < points.length; i++) {
             const p = { x: points[i].x - minX, y: points[i].y - minY };
             area[p.y][p.x] = true;
@@ -102,21 +101,21 @@ class FloodFill {
         const y = point.y;
         const surrounding = [];
         if (x - 1 > 0 && y - 1 > 0)
-            surrounding.push({ x: point.x - 1, y: point.y - 1 }); // top-left
+            surrounding.push({ x: point.x - 1, y: point.y - 1 });
         if (y - 1 > 0)
-            surrounding.push({ x: point.x, y: point.y - 1 }); // top
+            surrounding.push({ x: point.x, y: point.y - 1 });
         if (x + 1 < maxWidth && y - 1 > 0)
-            surrounding.push({ x: point.x + 1, y: point.y - 1 }); // top-right
+            surrounding.push({ x: point.x + 1, y: point.y - 1 });
         if (x + 1 < maxWidth)
-            surrounding.push({ x: point.x + 1, y: point.y }); // right
+            surrounding.push({ x: point.x + 1, y: point.y });
         if (x + 1 < maxWidth && y + 1 < maxHeight)
-            surrounding.push({ x: point.x + 1, y: point.y + 1 }); // low-right
+            surrounding.push({ x: point.x + 1, y: point.y + 1 });
         if (y + 1 < maxHeight)
-            surrounding.push({ x: point.x, y: point.y + 1 }); // low
+            surrounding.push({ x: point.x, y: point.y + 1 });
         if (x - 1 > 0 && y + 1 < maxHeight)
-            surrounding.push({ x: point.x - 1, y: point.y - 1 }); // low-left
+            surrounding.push({ x: point.x - 1, y: point.y - 1 });
         if (x - 1 > 0)
-            surrounding.push({ x: point.x - 1, y: point.y - 1 }); // left
+            surrounding.push({ x: point.x - 1, y: point.y - 1 });
         return surrounding;
     }
     static getSurroundingNonDiagonal(point, maxWidth, maxHeight) {
@@ -124,13 +123,13 @@ class FloodFill {
         const y = point.y;
         const surrounding = [];
         if (y - 1 > 0)
-            surrounding.push({ x: point.x, y: point.y - 1 }); // top
+            surrounding.push({ x: point.x, y: point.y - 1 });
         if (x + 1 < maxWidth)
-            surrounding.push({ x: point.x + 1, y: point.y }); // right
+            surrounding.push({ x: point.x + 1, y: point.y });
         if (y + 1 < maxHeight)
-            surrounding.push({ x: point.x, y: point.y + 1 }); // low
+            surrounding.push({ x: point.x, y: point.y + 1 });
         if (x - 1 > 0)
-            surrounding.push({ x: point.x - 1, y: point.y - 1 }); // left
+            surrounding.push({ x: point.x - 1, y: point.y - 1 });
         return surrounding;
     }
 }

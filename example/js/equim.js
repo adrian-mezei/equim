@@ -49,92 +49,45 @@ const EdgeDetector_1 = require("./EdgeDetector");
 const FloodFill_1 = require("./FloodFill");
 const ClosedLineConnector_1 = require("./ClosedLineConnector");
 class Blur {
-    /**
-     * Blurs the whole image with fast blur.
-     *
-     * @param image The image to blure.
-     * @param blurIntensity The radius of the blur color averaging.
-     */
     blurFull(image, blurIntensity) {
         image.blur(blurIntensity);
     }
-    /**
-     * Blurs the rectangular part of the image that is described by four hotspots. The blured
-     * part is rectangular from the point of view of the camera that is in the center of the sphere
-     * of the equirectangularly projected space. The given four points divide the sphere into two
-     * parts. The one that contains the midpoint of the first and the third hotspost is bing blured.
-     *
-     * @param image The image to blure at the rectangular part bounded by the hotspots.
-     * @param hotspots The corners of the rectangle to be blured.
-     * @param blurIntensity The radius of the blur color averaging.
-     */
     blurEquirectRectangle(image, hotspotsArray, blurIntensity) {
         const masks = [];
         for (const hotspots of hotspotsArray) {
             if (hotspots.length !== 4)
                 throw new Error('Only quadrilaterals (4 hotspots) are accepted.');
-            /*for(let i=0; i<hotspots.length; i++){
-                if(hotspots[(i+1)%hotspots.length].yaw - hotspots[i].yaw >= 180) return callback(new Error('All consecutive yaws must be less than 180 degrees from each other.'));
-            }*/
-            // check that no two points are too close to each other
-            //if(!noTwoHotspotsAreTooClose(hotspots, 0.1)) return callback(new Error('There are hotspots that are too close to each other.'));
-            // check that the provided point distances cannot be larger than
-            //     the half length of the great circle, otherwise the other
-            //     half of the Great circle is drawn, so in this case, a further point must be added
-            //     (greatCircle with parameter 1.5?)
             const points = new Converter_1.Converter(image.getWidth(), image.getHeight()).convertToXYs(hotspots);
             const gc = new GreatCircle_1.GreatCircle(image.getWidth(), image.getHeight());
-            //let time = new Date();
-            var segmentedBoundary = gc.segmentAlongGreatCircles(points); // Segment the lines of consecutive hotspots along the Great Circles
-            //console.log('    Segmentation along Great Circle: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
-            const chunks = EdgeDetector_1.EdgeDetector.detectEdges(segmentedBoundary, 0.5); // The corners of the image are added if needed
-            //console.log('    Extension with edges: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
+            var segmentedBoundary = gc.segmentAlongGreatCircles(points);
+            const chunks = new EdgeDetector_1.EdgeDetector(image.getWidth(), image.getHeight()).detectEdges(segmentedBoundary, 0.5);
             masks.push(...this.chunksToMasks(image, points[0], points[2], chunks));
         }
-        // TODO do the blurs in one step
         for (let i = 0; i < masks.length; i++)
             this.blurAtMask(image, masks[i], blurIntensity);
-        //console.log('    Jimp blur: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
     }
     chunksToMasks(image, hotspot1, hotspot2, chunks) {
         const gc = new GreatCircle_1.GreatCircle(image.getWidth(), image.getHeight());
         const masks = [];
         for (let chunk of chunks) {
-            var closedBoundary = ClosedLineConnector_1.ClosedLineConnector.connectWithClosedLines(chunk); // Connect the segmented boundaries to closed curves
-            //console.log('    Closure of boundaries: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
-            // Calculate points inside the boundary
+            var closedBoundary = ClosedLineConnector_1.ClosedLineConnector.connectWithClosedLines(chunk);
             const insidePoints = [];
             for (let i = 0; i < 1; i += 0.1)
                 insidePoints.push(gc.pointBetweenTwoPoints(hotspot1, hotspot2, i));
-            masks.push(FloodFill_1.FloodFill.fillArea(closedBoundary, insidePoints, image.getWidth(), image.getHeight())); // Flood fill from the inside point
-            //console.log('    Flood fill: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
+            masks.push(FloodFill_1.FloodFill.fillArea(closedBoundary, insidePoints, image.getWidth(), image.getHeight()));
         }
         return masks;
     }
-    /**
-     * Blurs the part of the image that is described by the mask.
-     *
-     * @param image The image to blure at the mask.
-     * @param mask The part of the provided image to blur.
-     * @param blurIntensity The radius of the blur color averaging.
-     */
     blurAtMask(image, mask, blurIntensity) {
-        let time = new Date();
         let jimp = new Jimp(mask.width, mask.height, 0);
-        //console.log('        Jimp mask image creation: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
         jimp.bitmap.data = new Buffer(mask.pixels);
-        //console.log('        Jimp mask image Buffer creation: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
-        // create the blured part
         const bluredPart = image
             .clone()
             .crop(mask.xPosition, mask.yPosition, mask.width, mask.height)
             .blur(blurIntensity)
             .mask(jimp, 0, 0);
-        //console.log('        Jimp image clone, crop, blur, mask: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
-        // consider that the blured part does not extend over the edges
         image
             .composite(bluredPart, mask.xPosition, mask.yPosition);
-        //console.log('        Jimp composite creation: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
     }
 }
 exports.Blur = Blur;
@@ -144,12 +97,6 @@ exports.Blur = Blur;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 class ClosedLineConnector {
-    /**
-     * Connects the lines formed by the consecutive point pairs of the provided points.
-     * The connections are always closed in such way, that every point of the boundary
-     * is connected to at least two other points of the boundary by a side.
-     * @param points The points that are to be consecutively connected.
-     */
     static connectWithClosedLines(points) {
         var closedBoundary = [];
         for (var i = 0; i < points.length; i++) {
@@ -159,31 +106,18 @@ class ClosedLineConnector {
         }
         return closedBoundary;
     }
-    /**
-     * Connects the line formed by the provided point pair. The connections are always closed in
-     * such way, that every point of the boundary is connected to at least two other points of
-     * the boundary by a side.
-     * @param points The points that are to be consecutively connected. These must be of integer
-     * coordinates.
-     */
     static connectWithClosedLine(p1, p2) {
         var pointsOfClosedBoundary = [p1];
         var lastPoint = p1;
-        // line of the two points from "y - y1 = m(x - x1)" to "ax + by + c = 0"
         const m = (p2.y - p1.y) / (p2.x - p1.x);
         const a = m;
         const b = -1;
         const c = -m * p1.x + p1.y;
         while (!(lastPoint.x === p2.x && lastPoint.y === p2.y)) {
-            // the possible steps left/right or up/down
-            // (one cloud also include diagonal step, but that is not considered closed in this case)
             const verticalStep = { x: lastPoint.x, y: lastPoint.y + ((p2.y > lastPoint.y) ? 1 : -1) };
             const horizontalStep = { x: lastPoint.x + ((p2.x > lastPoint.x) ? 1 : -1), y: lastPoint.y };
-            // distances from the line that connects the two points "(a*x + b*y + c)/sqrt(a*a + b*b)"
             const verticalDistance = Math.abs(a * verticalStep.x + b * verticalStep.y + c) / Math.sqrt(a * a + b * b);
             const horizontalDistance = Math.abs(a * horizontalStep.x + b * horizontalStep.y + c) / Math.sqrt(a * a + b * b);
-            // a more complicated decision because of edge cases, to avoid stepping to and back 
-            // the same points
             var nextPoint;
             if (verticalDistance < horizontalDistance)
                 nextPoint = verticalStep;
@@ -197,7 +131,7 @@ class ClosedLineConnector {
                     nextPoint = verticalStep;
             }
             else {
-                nextPoint = verticalStep; // could also be the horizontal one
+                nextPoint = verticalStep;
             }
             pointsOfClosedBoundary.push(nextPoint);
             lastPoint = pointsOfClosedBoundary[pointsOfClosedBoundary.length - 1];
@@ -212,29 +146,23 @@ exports.ClosedLineConnector = ClosedLineConnector;
 Object.defineProperty(exports, "__esModule", { value: true });
 const EdgeCrossingType_1 = require("../model/EdgeCrossingType");
 class EdgeDetector {
-    /**
-     * Looks for two consecutive points such that they are near the opposite
-     * rare sides. If there is such pair of points, then further points are
-     * inserted and the points may also be divided into chunks.
-     *
-     * @param points The points to be extended by the corners if needed.
-     * @param sideDistance The distance from the side to be considered close.
-     */
-    static detectEdges(points, sideDistance) {
+    constructor(imageWidth, imageHeight) {
+        this.imageWidth = imageWidth;
+        this.imageHeight = imageHeight;
+    }
+    detectEdges(points, sideDistance) {
         const edgeCrossings = [];
         for (var i = 0; i < points.length; i++) {
             const p1 = points[i];
             const p2 = points[(i + 1) % points.length];
-            if (p1.x > this.imageWidth - sideDistance && p2.x < sideDistance) { // left to right
-                if (p1.y > this.imageHeight / 2) { // bottom
-                    //console.log('BOTTOM_LEFT_RIGHT');
+            if (p1.x > this.imageWidth - sideDistance && p2.x < sideDistance) {
+                if (p1.y > this.imageHeight / 2) {
                     edgeCrossings.push({
                         type: EdgeCrossingType_1.EdgeCrossingType.BOTTOM_LEFT_RIGHT,
                         index: i
                     });
                 }
-                else { // top
-                    //console.log('TOP_LEFT_RIGHT');
+                else {
                     edgeCrossings.push({
                         type: EdgeCrossingType_1.EdgeCrossingType.TOP_LEFT_RIGHT,
                         index: i
@@ -242,16 +170,14 @@ class EdgeDetector {
                 }
                 i += 2;
             }
-            if (p1.x < sideDistance && p2.x > this.imageWidth - sideDistance) { // right to left
-                if (p1.y > this.imageHeight / 2) { // bottom
-                    //console.log('BOTTOM_RIGHT_LEFT');
+            if (p1.x < sideDistance && p2.x > this.imageWidth - sideDistance) {
+                if (p1.y > this.imageHeight / 2) {
                     edgeCrossings.push({
                         type: EdgeCrossingType_1.EdgeCrossingType.BOTTOM_RIGHT_LEFT,
                         index: i
                     });
                 }
-                else { // top
-                    //console.log('TOP_RIGHT_LEFT');
+                else {
                     edgeCrossings.push({
                         type: EdgeCrossingType_1.EdgeCrossingType.TOP_RIGHT_LEFT,
                         index: i
@@ -267,7 +193,7 @@ class EdgeDetector {
             default: throw new Error('The number of edge crossings is other than 0, 1 or 2.');
         }
     }
-    static extendSingleCrossing(points, edgeCrossing) {
+    extendSingleCrossing(points, edgeCrossing) {
         let point1;
         let point2;
         switch (edgeCrossing.type) {
@@ -291,7 +217,7 @@ class EdgeDetector {
         points.splice(edgeCrossing.index + 1, 0, point1, point2);
         return [points];
     }
-    static extendDoubleCrossing(points, edgeCrossing1, edgeCrossing2) {
+    extendDoubleCrossing(points, edgeCrossing1, edgeCrossing2) {
         let leftRight = undefined;
         let rightLeft = undefined;
         if (edgeCrossing1.type === EdgeCrossingType_1.EdgeCrossingType.BOTTOM_LEFT_RIGHT || edgeCrossing1.type === EdgeCrossingType_1.EdgeCrossingType.TOP_LEFT_RIGHT)
@@ -309,50 +235,28 @@ class EdgeDetector {
         let firstBegin = points.slice(0, edgeCrossing1.index + 1);
         let firstEnd = points.slice(edgeCrossing2.index + 1, points.length);
         let second = points.slice(edgeCrossing1.index + 1, edgeCrossing2.index + 1);
-        /*console.log('First begin: ');
-        console.log(firstBegin[0]);
-        console.log(firstBegin[firstBegin.length - 1]);
-
-        console.log('First end: ');
-        console.log(firstEnd[0]);
-        console.log(firstEnd[firstEnd.length - 1]);
-
-        console.log('Second: ');
-        console.log(second[0]);
-        console.log(second[second.length - 1]);*/
         const chunks = [[], []];
-        // construct the first chunk
         chunks[0].push(...firstBegin);
         this.extendWithEdge(chunks[0], firstEnd[0]);
         chunks[0].push(...firstEnd);
-        // construct the second chunk
         chunks[1].push(...second);
         this.extendWithEdge(chunks[1], chunks[1][0]);
         return chunks;
     }
-    /**
-     * Extends the provided point array by points, to connect the last point of the provided
-     * array to the provided point.
-     *
-     * @param points The points to be extended and whose last element must be an edge point.
-     * @param endY The y coordinate until the extension must be done.
-     */
-    static extendWithEdge(points, end) {
-        const last = points[points.length - 1]; // the last point of the part to be extended
+    extendWithEdge(points, end) {
+        const last = points[points.length - 1];
         if (last.x !== end.x)
             throw new Error('Edge points to be connected are not in the same column.');
         if (!(last.x === 0 || last.x === this.imageWidth))
             throw new Error('Points to be connected are not edge points.');
         if (Math.abs(end.y - last.y) <= 1)
-            return; // there is no gap between them
+            return;
         for (let i = 1; i < Math.abs(end.y - last.y); i++) {
             const step = Math.sign(end.y - last.y);
             points.push({ x: last.x, y: last.y + i * step });
         }
     }
 }
-EdgeDetector.imageWidth = 4000;
-EdgeDetector.imageHeight = 2000;
 exports.EdgeDetector = EdgeDetector;
 
 },{"../model/EdgeCrossingType":7}],5:[function(require,module,exports){
@@ -400,7 +304,6 @@ class FloodFill {
             }
             area.push(row);
         }
-        // shift back the points both horizontally and vertically by the smallest values
         for (var i = 0; i < points.length; i++) {
             const p = { x: points[i].x - minX, y: points[i].y - minY };
             area[p.y][p.x] = true;
@@ -460,21 +363,21 @@ class FloodFill {
         const y = point.y;
         const surrounding = [];
         if (x - 1 > 0 && y - 1 > 0)
-            surrounding.push({ x: point.x - 1, y: point.y - 1 }); // top-left
+            surrounding.push({ x: point.x - 1, y: point.y - 1 });
         if (y - 1 > 0)
-            surrounding.push({ x: point.x, y: point.y - 1 }); // top
+            surrounding.push({ x: point.x, y: point.y - 1 });
         if (x + 1 < maxWidth && y - 1 > 0)
-            surrounding.push({ x: point.x + 1, y: point.y - 1 }); // top-right
+            surrounding.push({ x: point.x + 1, y: point.y - 1 });
         if (x + 1 < maxWidth)
-            surrounding.push({ x: point.x + 1, y: point.y }); // right
+            surrounding.push({ x: point.x + 1, y: point.y });
         if (x + 1 < maxWidth && y + 1 < maxHeight)
-            surrounding.push({ x: point.x + 1, y: point.y + 1 }); // low-right
+            surrounding.push({ x: point.x + 1, y: point.y + 1 });
         if (y + 1 < maxHeight)
-            surrounding.push({ x: point.x, y: point.y + 1 }); // low
+            surrounding.push({ x: point.x, y: point.y + 1 });
         if (x - 1 > 0 && y + 1 < maxHeight)
-            surrounding.push({ x: point.x - 1, y: point.y - 1 }); // low-left
+            surrounding.push({ x: point.x - 1, y: point.y - 1 });
         if (x - 1 > 0)
-            surrounding.push({ x: point.x - 1, y: point.y - 1 }); // left
+            surrounding.push({ x: point.x - 1, y: point.y - 1 });
         return surrounding;
     }
     static getSurroundingNonDiagonal(point, maxWidth, maxHeight) {
@@ -482,13 +385,13 @@ class FloodFill {
         const y = point.y;
         const surrounding = [];
         if (y - 1 > 0)
-            surrounding.push({ x: point.x, y: point.y - 1 }); // top
+            surrounding.push({ x: point.x, y: point.y - 1 });
         if (x + 1 < maxWidth)
-            surrounding.push({ x: point.x + 1, y: point.y }); // right
+            surrounding.push({ x: point.x + 1, y: point.y });
         if (y + 1 < maxHeight)
-            surrounding.push({ x: point.x, y: point.y + 1 }); // low
+            surrounding.push({ x: point.x, y: point.y + 1 });
         if (x - 1 > 0)
-            surrounding.push({ x: point.x - 1, y: point.y - 1 }); // left
+            surrounding.push({ x: point.x - 1, y: point.y - 1 });
         return surrounding;
     }
 }
@@ -498,42 +401,22 @@ exports.FloodFill = FloodFill;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const Converter_1 = require("../util/Converter");
-// useful source: http://www.movable-type.co.uk/scripts/latlong.html
 class GreatCircle {
     constructor(imageWidth, imageHeight) {
         this.imageWidth = imageWidth;
         this.imageHeight = imageHeight;
         this.converter = new Converter_1.Converter(this.imageWidth, this.imageHeight);
     }
-    /**
-     * Segments each line segment of the consecutive point pairs of the provided points
-     * along the Great Circle.
-     *
-     * @param points The points to be connected with great circle segments.
-     *
-     * @returns The array of generated points including the provided points.
-     */
     segmentAlongGreatCircles(points) {
         var segmentedBoundary = [];
         for (var i = 0; i < points.length; i++) {
             const point1 = points[i];
             const point2 = points[(i + 1) % points.length];
-            // multiply by 2 to avoid holes because of rounding
             const connectionPixelNumber = 2 * Math.abs(point2.x - point1.x) + Math.abs(point2.y - point1.y);
             segmentedBoundary = segmentedBoundary.concat(this.segmentAlongGreatCircle(point1, point2, connectionPixelNumber));
         }
         return segmentedBoundary;
     }
-    /**
-     * Segments the line segment of the provided point pair along the Great Circle into
-     * a given number of pieces.
-     *
-     * @param point1 The beginning of the great circle.
-     * @param point2 The end of the great circle.
-     * @param numberOfGeneratedPoints The number of points to generate.
-     *
-     * @returns The array of generated points including the provided point1 and excluding the provided point2.
-     */
     segmentAlongGreatCircle(point1, point2, numberOfGeneratedPoints) {
         const boundingPoints = [];
         for (var i = 0; i <= 1; i += 1 / numberOfGeneratedPoints) {
@@ -541,14 +424,6 @@ class GreatCircle {
         }
         return boundingPoints;
     }
-    /**
-     * Evaluates the parametric equation of the Great Circle given by two points.
-     *
-     * @param point1 The beginning of a Great Circle segment.
-     * @param point2 The end of a Great Circle segment.
-     * @param t The parameter where the Great Circle is evaluated. This parameter
-     * is 0 at point1 and 1 at point2.
-     */
     pointBetweenTwoPoints(point1, point2, t) {
         const hotspot1 = this.converter.convertToYawPitch(point1);
         const hotspot2 = this.converter.convertToYawPitch(point2);
@@ -593,8 +468,6 @@ var EdgeCrossingType;
 Object.defineProperty(exports, "__esModule", { value: true });
 class Converter {
     constructor(imageWidth, imageHeight) {
-        this.imageWidth = 4000;
-        this.imageHeight = 2000;
         this.imageWidth = imageWidth;
         this.imageHeight = imageHeight;
     }

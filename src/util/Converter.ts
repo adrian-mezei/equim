@@ -3,8 +3,8 @@ import { Point } from '../model/Point';
 
 export class Converter {
 
-    private imageWidth = 4000;
-    private imageHeight = 2000;
+    private imageWidth: number;
+    private imageHeight: number;
 
     constructor(imageWidth: number, imageHeight: number){
         this.imageWidth = imageWidth;

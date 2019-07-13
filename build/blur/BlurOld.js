@@ -15,30 +15,6 @@ class Blur {
     }
     blurRectangular(imagePath, xCenter, yCenter, width, height, rotDeg, blurIntensity, callback) {
         this.blurMasked(imagePath, xCenter, yCenter, width, height, rotDeg, blurIntensity, this.squareMaskPath, callback);
-        /*const a = rotDeg / 180 * Math.PI;
-        const x = xCenter;
-        const y = yCenter;
-        const w = width;
-        const h = height;
-
-        Jimp.read(imagePath).then(image => {
-            const imageHeight = image.getHeight();
-            const imageWidth = image.getWidth();
-            const rotExtraWidth = imageHeight*Math.sin(a);
-            const rotExtraHeigth = imageWidth*Math.sin(a);
-
-            const Ax = x - w/2*Math.cos(a) - h/2*Math.sin(a);
-            const Ay = y + w/2*Math.sin(a) - h/2*Math.cos(a);
-            const newX = rotExtraWidth + Ax*Math.cos(a) - Ay*Math.sin(a);
-            const newY = Ax*Math.sin(a) + Ay*Math.cos(a);
-
-            image
-                .rotate(-rotDeg)
-                .composite(image.clone().crop(newX, newY, w, h).blur(blurIntensity), newX, newY)
-                .rotate(rotDeg)
-                .crop(rotExtraWidth, rotExtraHeigth, imageWidth, imageHeight)
-                .write(targetPath);
-        });*/
     }
     blurCircle(imagePath, xCenter, yCenter, radius, blurIntensity, callback) {
         this.blurEllipse(imagePath, xCenter, yCenter, radius, radius, 0, blurIntensity, callback);
@@ -58,7 +34,6 @@ class Blur {
         console.log('blurMasked');
         Jimp.read(imagePath).then(image => {
             console.log('read');
-            //Jimp.read(maskPath).then(mask => {
             this.createRoundMask(image.getWidth(), image.getHeight(), xCenter, yCenter, width, (err, resizedMaskData) => {
                 console.log('createRoundMask');
                 if (err || !resizedMaskData)
@@ -66,54 +41,12 @@ class Blur {
                 const x = resizedMaskData.x;
                 const y = resizedMaskData.y;
                 const resizedMask = resizedMaskData.mask;
-                //return callback(undefined, resizedMask);
-                // resize mask to the required width and height
-                /*const resizedMask: Jimp = mask
-                    .resize(width, height)
-                    .rotate(rotDeg);*/
-                //const resizedMask = this.createRoundMask(image.getWidth(), image.getHeight(), xCenter, yCenter, width);
-                // calculate the top left corner of the area to be blured
-                //const x = xCenter - resizedMask.getWidth()/2;
-                //let y = yCenter - resizedMask.getHeight()/2;
-                // if the top left corner is above or below the image, then crop the mask
-                /*if(y < 0) {
-                    resizedMask.crop(0, -y, resizedMask.getWidth(), resizedMask.getHeight() + y);
-                    y = 0;
-                    height += y;
-                }
-                if(y + height > image.getHeight()) {
-                    height = image.getHeight() - y;
-                    resizedMask.crop(0, 0, resizedMask.getWidth(), image.getHeight() - y);
-                }*/
-                // create the blured part
                 const bluredPart = image
                     .clone()
                     .crop(x, y, resizedMask.getWidth(), resizedMask.getHeight())
                     .blur(blurIntensity)
                     .mask(resizedMask, 0, 0);
-                /*var arr = [...bluredPart.bitmap.data];
-                for(let i = 0; i<arr.length; i++){
-                    if(i%4==0) arr[i] = 35;
-                    if(i%4==1) arr[i] = 141;
-                    if(i%4==2) arr[i] = 165;
-                    if(i%4===3) arr[i] = 255;
-                    //else arr[i] = 0;
-                }
-                bluredPart.bitmap.data = new Buffer(arr);
-                
-                console.log(arr);
-                console.log('Data:');
-                console.log(bluredPart.bitmap.data.length);
-                console.log('Width:');
-                console.log(bluredPart.bitmap.width);
-                console.log('Height:');
-                console.log(bluredPart.bitmap.height);
-*/
-                //return  callback(undefined, bluredPart);
-                // insert the blured part and pay attention to split it into two parts
-                // if it extends over the left or right edge
                 if (x < 0) {
-                    // extends over the left edge
                     const bluredPartLeft = bluredPart
                         .clone()
                         .crop(0, 0, -x, bluredPart.getHeight());
@@ -124,7 +57,6 @@ class Blur {
                         .composite(bluredPartRight, 0, y);
                 }
                 else if (x + bluredPart.getWidth() > image.getWidth()) {
-                    // extends over the right edge
                     const edge = image.getWidth() - x;
                     const bluredPartLeft = bluredPart
                         .clone()
@@ -136,7 +68,6 @@ class Blur {
                         .composite(bluredPartRight, 0, y);
                 }
                 else {
-                    // the blured does not extend over any edge
                     image
                         .composite(bluredPart, x, y);
                 }
@@ -147,28 +78,22 @@ class Blur {
     createRoundMask(width, height, xCenter, yCenter, radius, callback) {
         const maskLines = [];
         let maxMaskWidth = 0;
-        let addHeight = 0;
         for (let yDistanceFromCircleCentre = radius; yDistanceFromCircleCentre > -radius; yDistanceFromCircleCentre--) {
             let y = yCenter - yDistanceFromCircleCentre;
             if (y >= 0 && y < height) {
-                const lineHalfWidth = Math.sqrt(radius * radius - yDistanceFromCircleCentre * yDistanceFromCircleCentre); // Pythagorean
-                const lineWidth = 2 * lineHalfWidth; // this is to be equirectangularly projected
-                const globeRadius = width / 2 / Math.PI /**2/Math.sqrt(3)*/;
+                const lineHalfWidth = Math.sqrt(radius * radius - yDistanceFromCircleCentre * yDistanceFromCircleCentre);
+                const lineWidth = 2 * lineHalfWidth;
+                const globeRadius = width / 2 / Math.PI;
                 const distanceFromEquatorOnGlobe = Math.abs(height / 2 - y);
                 const angleOfHeightOnGlobe = Math.PI * 2 * (distanceFromEquatorOnGlobe / (2 * globeRadius * Math.PI));
-                //const angleOfHeightOnGlobe = Math.asin(distanceFromEquatorOnGlobe/globeRadius);
                 const globeDistantRadius = Math.cos(angleOfHeightOnGlobe) * globeRadius;
                 const globeDistantPerimeter = 2 * globeDistantRadius * Math.PI;
                 const scaleFactor = width / globeDistantPerimeter;
                 const scaledLineWidth = (lineWidth * scaleFactor > width) ? width : lineWidth * scaleFactor;
                 const roundedScaledLineWidth = Math.round(scaledLineWidth);
-                //const addHeightNew = Math.sin(angleOfHeightOnGlobe)*globeRadius;
-                //if(addHeight === 0 || Math.round(addHeightNew) !== Math.round(addHeight)){
-                //    addHeight = addHeightNew;
                 maskLines.push(roundedScaledLineWidth);
                 if (roundedScaledLineWidth > maxMaskWidth)
                     maxMaskWidth = roundedScaledLineWidth;
-                //}
             }
         }
         const data = [];
@@ -178,10 +103,10 @@ class Blur {
             const lineWidth = maskLines[row];
             const begin = (maxMaskWidth - lineWidth) / 2;
             const pixelValue = (col < begin || col > begin + lineWidth) ? 0 : 255;
-            data.push(pixelValue); // r
-            data.push(pixelValue); // g
-            data.push(pixelValue); // b
-            data.push(255); // a
+            data.push(pixelValue);
+            data.push(pixelValue);
+            data.push(pixelValue);
+            data.push(255);
         }
         new Jimp(maxMaskWidth, maskLines.length, 0, (err, jimp) => {
             if (err || !jimp)
@@ -222,7 +147,6 @@ class Blur {
                 this.greatCircleConnect(image, hotSpot1, hotSpot2);
             }
             callback(undefined, image);
-            // this.drawEquirectRectImage(image, hotSpots[0].yaw, hotSpots[2].yaw, hotSpots[2].pitch, hotSpots[0].pitch, callback);
         });
     }
     greatCircleConnect(image, p1, p2) {
@@ -242,7 +166,6 @@ class Blur {
             iy = (Math.atan2(z, Math.sqrt(x * x + y * y)) * 180) / 3.1415;
             ix = (Math.atan2(y, x) * 180) / 3.1415;
             const xy = this.convertToXY(ix, iy);
-            //circleColor(screen, gpsatvaltasx(ix), gpsatvaltasy(iy), 1, 0xffffffff);
             this.drawOneX(xy.x, xy.y, image);
         }
     }
@@ -294,9 +217,7 @@ class Blur {
         y = Math.round(y);
         const index = image.getWidth() * 4 * (y - 1) + x * 4;
         for (let i = -10; i < 10; i++) {
-            // horizontal line
             image.bitmap.data[index + i * 4] = 255;
-            // vertical line
             image.bitmap.data[index + i * 4 * image.getWidth()] = 255;
         }
     }

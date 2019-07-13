@@ -94,7 +94,7 @@ export class Drawer {
         const points: Point[] = new Converter(image.getWidth(), image.getHeight()).convertToXYs(hotspots);
         
         var segmentedBoundary = new GreatCircle(image.getWidth(), image.getHeight()).segmentAlongGreatCircles(points); // Segment the lines of consecutive hotspots along the Great Circles
-        EdgeDetector.detectEdges(segmentedBoundary, 0.5);
+        new EdgeDetector(image.getWidth(), image.getHeight()).detectEdges(segmentedBoundary, 0.5);
         var closedBoundary = ClosedLineConnector.connectWithClosedLines(segmentedBoundary); // Connect the segmented boundary to a closed curve
         
         Drawer.drawXs(image, closedBoundary, 1, {r: 0, g: 0, b: 255, a: 255});

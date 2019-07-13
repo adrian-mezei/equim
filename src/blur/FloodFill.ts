@@ -124,6 +124,7 @@ export class FloodFill {
         return surrounding;
     }
 
+    // @ts-ignore
     private static getSurroundingNonDiagonal(point: Point, maxWidth: number, maxHeight: number): Point[]{
         const x = point.x;
         const y = point.y;

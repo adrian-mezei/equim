@@ -1,10 +1,15 @@
 {
     "compilerOptions": {
-        "target": "es2015",
-        "module": "commonjs", 
+        "module": "commonjs",
+        "target": "es6", 
+        "esModuleInterop": true,
+        "removeComments": true,
         "outDir": "build",
+        "forceConsistentCasingInFileNames": true,
+        "noImplicitReturns": true,
         "strict": true,
-        "esModuleInterop": true
+        "noUnusedLocals": true,
+        "strictFunctionTypes": true
     },
     "exclude": [
         "test/**/*"

@@ -4,9 +4,14 @@ import { EdgeCrossing } from '../model/EdgeCrossing';
 
 export class EdgeDetector {
     
-    private static imageWidth = 4000;
-    private static imageHeight = 2000;
-    
+    private imageWidth: number;
+    private imageHeight: number;
+
+    constructor(imageWidth: number, imageHeight: number){
+        this.imageWidth = imageWidth;
+        this.imageHeight = imageHeight;
+    }
+
     /**
      * Looks for two consecutive points such that they are near the opposite 
      * rare sides. If there is such pair of points, then further points are
@@ -15,7 +20,7 @@ export class EdgeDetector {
      * @param points The points to be extended by the corners if needed.
      * @param sideDistance The distance from the side to be considered close.
      */
-    public static detectEdges(points: Point[], sideDistance: number): Point[][]{
+    public detectEdges(points: Point[], sideDistance: number): Point[][]{
         const edgeCrossings: EdgeCrossing[] = [];
         for(var i=0; i<points.length; i++){
             const p1 = points[i];
@@ -64,7 +69,7 @@ export class EdgeDetector {
         }
     }
 
-    private static extendSingleCrossing(points: Point[], edgeCrossing: EdgeCrossing): Point[][]{
+    private extendSingleCrossing(points: Point[], edgeCrossing: EdgeCrossing): Point[][]{
         let point1: Point;
         let point2: Point;
         switch (edgeCrossing.type) {
@@ -93,7 +98,7 @@ export class EdgeDetector {
         return [points];
     }
 
-    private static extendDoubleCrossing(points: Point[], edgeCrossing1: EdgeCrossing, edgeCrossing2: EdgeCrossing): Point[][]{
+    private extendDoubleCrossing(points: Point[], edgeCrossing1: EdgeCrossing, edgeCrossing2: EdgeCrossing): Point[][]{
         let leftRight: EdgeCrossing | undefined = undefined;
         let rightLeft: EdgeCrossing | undefined = undefined;
         if(edgeCrossing1.type === EdgeCrossingType.BOTTOM_LEFT_RIGHT || edgeCrossing1.type === EdgeCrossingType.TOP_LEFT_RIGHT) leftRight = edgeCrossing1;
@@ -141,7 +146,7 @@ export class EdgeDetector {
      * @param points The points to be extended and whose last element must be an edge point.
      * @param endY The y coordinate until the extension must be done.
      */
-    private static extendWithEdge(points: Point[], end: Point) {        
+    private extendWithEdge(points: Point[], end: Point) {        
         const last = points[points.length - 1]; // the last point of the part to be extended
 
         if(last.x !== end.x) throw new Error('Edge points to be connected are not in the same column.');

@@ -24,6 +24,7 @@ const hotSpotsTile = [
     { yaw: 10.8,  pitch: -76 }
 ];
 
+// @ts-ignore
 const hotSpotsSmall = [
     // longitude(yaw) -180 - +180; latitude(pitch): -90 - +90
     { yaw: 6,   pitch: -64 },
@@ -32,6 +33,7 @@ const hotSpotsSmall = [
     { yaw: 8,  pitch: -68 }
 ];
 
+// @ts-ignore
 const hotSpotsLarge = [
     // longitude(yaw) -180 - +180; latitude(pitch): -90 - +90
     { yaw: -80,   pitch: 40 },
@@ -56,6 +58,7 @@ const hotSpotsEdge = [
     { yaw: 150,  pitch: -20 }
 ];
 
+// @ts-ignore
 const hotSpotsTie = [
     // longitude(yaw) -180 - +180; latitude(pitch): -90 - +90
     { yaw: -80,   pitch: 20 },
@@ -64,6 +67,7 @@ const hotSpotsTie = [
     { yaw: -80,  pitch: -20 }
 ];
 
+// @ts-ignore
 const hotSpotsConcave = [
     // longitude(yaw) -180 - +180; latitude(pitch): -90 - +90
     { yaw: -20,   pitch: 20 },
@@ -76,20 +80,17 @@ equim.read(imagePath, (err, image) => {
     if(err || !image) return console.log(err);
 
     console.log('Read time: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
-    console.log();
  
     equim.blur.blurEquirectRectangle(image, [hotSpotsBlessing, hotSpotsTile, hotSpotsBottom, hotSpotsEdge], 100);
         
     Drawer.drawCircledHotspots(image, [...hotSpotsBlessing, ...hotSpotsTile, ...hotSpotsBottom, ...hotSpotsEdge]);
 
     console.log('Total blur time: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
-    console.log();
 
     equim.writeToFile(image, 'out/equirectangular.jpg', (err) => {
         if(err) return console.log(err);
 
         console.log('Write to file time: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
-        console.log();
         console.log('Total runtime: ' + (new Date().getTime() - beginTime.getTime())/1000 + 's');
     });
 });

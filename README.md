@@ -25,7 +25,7 @@ From URL
 ```javascript
 const imagePath = 'https://s3-eu-west-1.amazonaws.com/equim.toura.io/panoramas/room.jpg';
 equim.read(imagePath, (err, image) => {
-    // image is availale as a Jimp
+    // image is available as a Jimp
 });
 ```
 
@@ -33,7 +33,7 @@ From base64 encoded string
 ```javascript
 const imageBase64 = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDA...';
 equim.read(imageBase64, (err, image) => {
-    // image is availale as a Jimp
+    // image is available as a Jimp
 });
 ```
 

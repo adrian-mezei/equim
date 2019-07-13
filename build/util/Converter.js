@@ -2,8 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 class Converter {
     constructor(imageWidth, imageHeight) {
-        this.imageWidth = 4000;
-        this.imageHeight = 2000;
         this.imageWidth = imageWidth;
         this.imageHeight = imageHeight;
     }

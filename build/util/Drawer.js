@@ -32,12 +32,10 @@ class Drawer {
         if (!color)
             color = { r: 255, g: 0, b: 0, a: 255 };
         for (let i = -size + 1; i < size; i++) {
-            // horizontal line
             image.bitmap.data[index + i * 4 + 0] = color.r;
             image.bitmap.data[index + i * 4 + 1] = color.g;
             image.bitmap.data[index + i * 4 + 2] = color.b;
             image.bitmap.data[index + i * 4 + 3] = color.a;
-            // vertical line
             image.bitmap.data[index + i * 4 * image.getWidth() + 0] = color.r;
             image.bitmap.data[index + i * 4 * image.getWidth() + 1] = color.g;
             image.bitmap.data[index + i * 4 * image.getWidth() + 2] = color.b;
@@ -71,14 +69,14 @@ class Drawer {
     }
     static drawEquirectRectangle(image, hotspots) {
         const points = new Converter_1.Converter(image.getWidth(), image.getHeight()).convertToXYs(hotspots);
-        var segmentedBoundary = new GreatCircle_1.GreatCircle(image.getWidth(), image.getHeight()).segmentAlongGreatCircles(points); // Segment the lines of consecutive hotspots along the Great Circles
+        var segmentedBoundary = new GreatCircle_1.GreatCircle(image.getWidth(), image.getHeight()).segmentAlongGreatCircles(points);
         Drawer.drawXs(image, segmentedBoundary, 1, { r: 0, g: 255, b: 0, a: 255 });
     }
     static drawEquirectRectangleClosed(image, hotspots) {
         const points = new Converter_1.Converter(image.getWidth(), image.getHeight()).convertToXYs(hotspots);
-        var segmentedBoundary = new GreatCircle_1.GreatCircle(image.getWidth(), image.getHeight()).segmentAlongGreatCircles(points); // Segment the lines of consecutive hotspots along the Great Circles
-        EdgeDetector_1.EdgeDetector.detectEdges(segmentedBoundary, 0.5);
-        var closedBoundary = ClosedLineConnector_1.ClosedLineConnector.connectWithClosedLines(segmentedBoundary); // Connect the segmented boundary to a closed curve
+        var segmentedBoundary = new GreatCircle_1.GreatCircle(image.getWidth(), image.getHeight()).segmentAlongGreatCircles(points);
+        new EdgeDetector_1.EdgeDetector(image.getWidth(), image.getHeight()).detectEdges(segmentedBoundary, 0.5);
+        var closedBoundary = ClosedLineConnector_1.ClosedLineConnector.connectWithClosedLines(segmentedBoundary);
         Drawer.drawXs(image, closedBoundary, 1, { r: 0, g: 0, b: 255, a: 255 });
     }
 }
