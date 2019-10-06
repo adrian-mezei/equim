@@ -1,4 +1,4 @@
-import Jimp = require('jimp');
+import * as Jimp from 'jimp';
 import { Point } from '../model/Point';
 import { Hotspot } from '../model/Hotspot';
 import { Converter } from '../util/Converter';
@@ -16,7 +16,7 @@ export class Blur {
      * @param image The image to blure.
      * @param blurIntensity The radius of the blur color averaging.
      */
-    public blurFull(image: Jimp, blurIntensity: number) {
+    public blurFull(image: Jimp.Jimp, blurIntensity: number) {
         image.blur(blurIntensity);
     }
 
@@ -30,7 +30,7 @@ export class Blur {
      * @param hotspots The corners of the rectangle to be blured.
      * @param blurIntensity The radius of the blur color averaging.
      */
-    public blurEquirectRectangle(image: Jimp, hotspotsArray: Hotspot[][], blurIntensity: number) {
+    public blurEquirectRectangle(image: Jimp.Jimp, hotspotsArray: Hotspot[][], blurIntensity: number) {
         const masks: Mask[] = [];
         for(const hotspots of hotspotsArray){
             if(hotspots.length !== 4) throw new Error('Only quadrilaterals (4 hotspots) are accepted.');
@@ -63,7 +63,7 @@ export class Blur {
         //console.log('    Jimp blur: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
     }
 
-    private chunksToMasks(image: Jimp, hotspot1: Point, hotspot2: Point, chunks: Point[][]): Mask[] {
+    private chunksToMasks(image: Jimp.Jimp, hotspot1: Point, hotspot2: Point, chunks: Point[][]): Mask[] {
         const gc = new GreatCircle(image.getWidth(), image.getHeight());
 
         const masks: Mask[] = [];
@@ -88,10 +88,10 @@ export class Blur {
      * @param mask The part of the provided image to blur.
      * @param blurIntensity The radius of the blur color averaging.
      */
-    private blurAtMask(image: Jimp, mask: Mask, blurIntensity: number) {
+    private blurAtMask(image: Jimp.Jimp, mask: Mask, blurIntensity: number) {
         //let time = new Date();
         
-        let jimp = new Jimp(mask.width, mask.height, 0);
+        let jimp = new Jimp.default(mask.width, mask.height, 0);
         //console.log('        Jimp mask image creation: ' + (new Date().getTime() - time.getTime())/1000 + 's'); time = new Date();
     
         jimp.bitmap.data = new Buffer(mask.pixels);

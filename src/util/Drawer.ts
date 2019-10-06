@@ -1,4 +1,4 @@
-import Jimp = require('jimp');
+import { Jimp } from 'jimp';
 import { Point } from '../model/Point';
 import { Rgba } from '../model/Rgba';
 import { Hotspot } from '../model/Hotspot';

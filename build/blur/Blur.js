@@ -1,6 +1,13 @@
 "use strict";
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const Jimp = require("jimp");
+const Jimp = __importStar(require("jimp"));
 const Converter_1 = require("../util/Converter");
 const GreatCircle_1 = require("./GreatCircle");
 const EdgeDetector_1 = require("./EdgeDetector");
@@ -37,7 +44,7 @@ class Blur {
         return masks;
     }
     blurAtMask(image, mask, blurIntensity) {
-        let jimp = new Jimp(mask.width, mask.height, 0);
+        let jimp = new Jimp.default(mask.width, mask.height, 0);
         jimp.bitmap.data = new Buffer(mask.pixels);
         const bluredPart = image
             .clone()
