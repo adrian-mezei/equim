@@ -1,5 +1,5 @@
-import { Equim } from '../src/Equim';
-import Jimp = require('jimp');
+import { Equim } from '../Equim';
+import { Jimp } from 'jimp';
 
 const imagePath = './res/equirectangularRED.jpg';
 

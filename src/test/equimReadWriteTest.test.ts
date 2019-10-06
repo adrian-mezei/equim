@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { Equim } from '../src/Equim';
+import { Equim } from '../Equim';
 import Jimp = require('jimp');
 
 const imagePath = './res/equirectangularRED.jpg';

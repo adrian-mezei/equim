@@ -2,9 +2,10 @@
     "compilerOptions": {
         "module": "commonjs",
         "target": "es6", 
+        "outDir": "build",
+        "rootDir": "./src/",
         "esModuleInterop": true,
         "removeComments": true,
-        "outDir": "build",
         "forceConsistentCasingInFileNames": true,
         "noImplicitReturns": true,
         "strict": true,
@@ -12,6 +13,8 @@
         "strictFunctionTypes": true
     },
     "exclude": [
-        "test/**/*"
+        "node_modules",
+        "build",
+        "src/test"
     ]
 }

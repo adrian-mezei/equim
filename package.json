@@ -4,7 +4,7 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "test": "mocha --require ts-node/register test/**/*.ts",
+        "test": "mocha --require ts-node/register src/test/**/*.test.ts",
         "copyBlurToExample": "@powershell -NoProfile -ExecutionPolicy Unrestricted -Command ./scripts/copyBlur.ps1"
     },
     "author": "",
