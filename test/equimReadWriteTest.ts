@@ -1,4 +1,4 @@
-import { expect, assert } from 'chai';
+import { expect } from 'chai';
 import { Equim } from '../src/Equim';
 import Jimp = require('jimp');
 
